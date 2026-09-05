@@ -1,21 +1,28 @@
 "use client";
-
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
+  ArrowRight,
+  ArrowUpRight,
+  BookOpen,
   CalendarDays,
-  CheckCircle2,
-  ChevronRight,
-  Clock,
-  ListChecks,
+  Check,
+  CheckCheck,
+  Clock3,
+  Library,
+  ListTodo,
   Plus,
+  Sprout,
+  Target,
 } from "lucide-react";
 import { PageHeader } from "@/components/shell/page-header";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState, LoadingState } from "@/components/ui/states";
-import { ProgressBar } from "@/components/ui/progress-bar";
+import { ProgressBar, ProgressRing } from "@/components/ui/progress-bar";
+import { StatCard } from "@/components/ui/stat-card";
+import { AnimatedList, Reveal } from "@/components/ui/motion";
 import { TaskCard } from "@/components/academics/task-card";
 import { TaskFormModal } from "@/components/academics/task-form-modal";
 import { SessionFormModal } from "@/components/planner/session-form-modal";
@@ -23,6 +30,8 @@ import { SubjectFormModal } from "@/components/academics/subject-form-modal";
 import { ResourceFormModal } from "@/components/learning/resource-form-modal";
 import { StudySessionCard } from "@/components/planner/study-session-card";
 import { AiRecommendationCard } from "@/components/dashboard/ai-recommendation-card";
+import { StudyChart } from "@/components/insights/study-chart";
+import { WeekStrip, weekStart } from "@/components/planner/week-strip";
 import { useApp } from "@/components/providers/app-data";
 import {
   dayKey,
@@ -32,302 +41,495 @@ import {
   rankTasks,
   todayKey,
 } from "@/lib/utils";
-import type { Task as TaskModel } from "@/lib/types";
+import type { Task } from "@/lib/types";
 
 export default function DashboardPage() {
   const { profile, subjects, tasks, sessions, resources, loading } = useApp();
   const [taskModal, setTaskModal] = useState(false);
-  const [editingTask, setEditingTask] = useState<TaskModel | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [sessionModal, setSessionModal] = useState(false);
   const [subjectModal, setSubjectModal] = useState(false);
   const [resourceModal, setResourceModal] = useState(false);
-
-  const openNewTask = () => {
-    setEditingTask(null);
-    setTaskModal(true);
-  };
-
+  const [taskView, setTaskView] = useState<"priority" | "today">("priority");
+  const [selectedDay, setSelectedDay] = useState(todayKey());
+  const [week, setWeek] = useState(weekStart(todayKey()));
   const subjectMap = useMemo(
     () => new Map(subjects.map((s) => [s.id, s])),
-    [subjects]
+    [subjects],
   );
-
   const stats = useMemo(() => {
     const pending = tasks.filter((t) => t.status === "pending");
     const completed = tasks.length - pending.length;
     const overdue = pending.filter((t) => dueState(t.due_date) === "overdue");
     const dueToday = pending.filter((t) => dueState(t.due_date) === "today");
-    const upcoming = rankTasks(pending).slice(0, 5);
-    const tk = todayKey();
-    const todaysSessions = sessions
-      .filter((s) => s.status === "planned" && dayKey(s.planned_date) === tk)
-      .sort((a, b) => a.planned_date.localeCompare(b.planned_date));
     const studyMinutes = sessions
       .filter((s) => s.status === "completed")
       .reduce((sum, s) => sum + s.duration_minutes, 0);
-    const completionPct = tasks.length
-      ? Math.round((completed / tasks.length) * 100)
-      : 0;
     return {
-      pending: pending.length,
+      pending,
       completed,
       overdue,
       dueToday,
-      upcoming,
-      todaysSessions,
       studyMinutes,
-      completionPct,
+      completionPct: tasks.length
+        ? Math.round((completed / tasks.length) * 100)
+        : 0,
     };
   }, [tasks, sessions]);
-
-  if (loading) return <LoadingState label="Loading your dashboard…" />;
-
+  const visibleTasks = (
+    taskView === "today" ? rankTasks(stats.dueToday) : rankTasks(tasks)
+  ).slice(0, 4);
+  const daySessions = sessions.filter(
+    (s) => dayKey(s.planned_date) === selectedDay,
+  );
+  const counts = sessions.reduce<Record<string, number>>((acc, s) => {
+    const day = dayKey(s.planned_date);
+    if (day) acc[day] = (acc[day] || 0) + 1;
+    return acc;
+  }, {});
+  const openTask = () => {
+    setEditingTask(null);
+    setTaskModal(true);
+  };
+  if (loading) return <LoadingState label="Loading your academic overview…" />;
   const firstName = profile?.full_name?.split(" ")[0] || "there";
-  const hasData = subjects.length > 0 || tasks.length > 0;
-
   return (
     <>
       <PageHeader
-        title={`${greeting()}, ${firstName}`}
-        description={
-          stats.overdue.length > 0
-            ? `You have ${stats.overdue.length} overdue task${stats.overdue.length > 1 ? "s" : ""} and ${stats.dueToday.length} due today.`
-            : stats.dueToday.length > 0
-              ? `You have ${stats.dueToday.length} task${stats.dueToday.length > 1 ? "s" : ""} due today — you've got this.`
-              : "Here's your academic day at a glance."
-        }
+        eyebrow={new Date().toLocaleDateString(undefined, {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })}
+        title={`${greeting()}, ${firstName}.`}
+        description="A little focus today. A little closer to your goals."
         action={
-          <div className="hidden gap-2 sm:flex">
-            <Button size="sm" onClick={openNewTask}>
-              <Plus className="h-4 w-4" /> Task
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setSessionModal(true)}>
-              <Plus className="h-4 w-4" /> Study session
-            </Button>
-          </div>
+          <Button onClick={openTask}>
+            <Plus className="h-4 w-4" /> Add task
+          </Button>
         }
       />
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Card>
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-            <ListChecks className="h-4 w-4" /> Pending
-          </div>
-          <p className="mt-2 text-2xl font-bold text-slate-900">{stats.pending}</p>
-          <p className="text-xs text-slate-500">tasks to complete</p>
-        </Card>
-        <Card className={stats.overdue.length ? "border-red-200 bg-red-50/50" : ""}>
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-            <AlertTriangle className="h-4 w-4 text-red-500" /> Overdue
-          </div>
-          <p className="mt-2 text-2xl font-bold text-slate-900">
-            {stats.overdue.length}
-          </p>
-          <p className="text-xs text-slate-500">needs attention</p>
-        </Card>
-        <Card>
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Completed
-          </div>
-          <p className="mt-2 text-2xl font-bold text-slate-900">
-            {stats.completed}
-          </p>
-          <p className="text-xs text-slate-500">{stats.completionPct}% of all tasks</p>
-        </Card>
-        <Card>
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-            <Clock className="h-4 w-4 text-brand-600" /> Study time
-          </div>
-          <p className="mt-2 text-2xl font-bold text-slate-900">
-            {minutesToLabel(stats.studyMinutes)}
-          </p>
-          <p className="text-xs text-slate-500">sessions completed</p>
-        </Card>
-      </div>
-
-      {!hasData ? (
-        <div className="mt-6">
-          <EmptyState
-            icon={<CalendarDays className="h-10 w-10" />}
-            title="Let's build your workspace"
-            description="Add your subjects first, then tasks with deadlines, plan study sessions, and save learning resources."
-            action={
-              <div className="flex flex-wrap justify-center gap-2">
-                <Button size="sm" onClick={() => setSubjectModal(true)}>
-                  <Plus className="h-4 w-4" /> Add subjects
-                </Button>
-                <Button size="sm" variant="outline" onClick={openNewTask}>
-                  <Plus className="h-4 w-4" /> Add a task
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setSessionModal(true)}>
-                  <Plus className="h-4 w-4" /> Plan study
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setResourceModal(true)}>
-                  <Plus className="h-4 w-4" /> Save resource
-                </Button>
-              </div>
-            }
-          />
-        </div>
-      ) : (
-        <div className="mt-6 grid gap-6 lg:grid-cols-3">
-          {/* Left column: work */}
-          <div className="space-y-6 lg:col-span-2">
-            {/* Overdue alert */}
-            {stats.overdue.length > 0 && (
-              <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
-                <div>
-                  <p className="text-sm font-semibold text-red-800">
-                    {stats.overdue.length} overdue task{stats.overdue.length > 1 ? "s" : ""}
-                  </p>
-                  <p className="text-sm text-red-700">
-                    {stats.overdue.slice(0, 3).map((t) => t.title).join(", ")}
-                    {stats.overdue.length > 3 ? "…" : ""}
-                  </p>
-                </div>
-              </div>
+      <Reveal className="hidden sm:block">
+        <section className="relative mb-6 flex flex-wrap items-center justify-between gap-5 overflow-hidden rounded-xl border border-brand-200 bg-brand-50 px-5 py-6 sm:px-7">
+          <div className="relative z-10 max-w-[65%] sm:max-w-[70%]">
+            <div className="mb-2 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[.14em] text-brand-700">
+              <Sprout className="h-3.5 w-3.5" />
+              Your academic command center
+            </div>
+            <h2 className="text-xl font-bold tracking-[-.04em] sm:text-[25px]">
+              {stats.pending.length
+                ? "Good things take a little focus."
+                : stats.completed
+                  ? "Look at you making progress."
+                  : "A fresh space for big possibilities."}
+            </h2>
+            <p className="mt-2 text-xs leading-relaxed text-slate-600">
+              {stats.dueToday.length
+                ? `You have ${stats.dueToday.length} ${stats.dueToday.length === 1 ? "task" : "tasks"} due today. Let’s make a little room for progress.`
+                : tasks.length
+                  ? `${stats.completed} tasks behind you. ${stats.pending.length} next steps ahead. You’ve got this.`
+                  : "Bring your subjects, plans, and ideas together. Let’s make this semester yours."}
+            </p>
+            {!subjects.length && (
+              <button
+                className="text-link mt-4 text-[11px]"
+                onClick={() => setSubjectModal(true)}
+              >
+                Start with your first subject{" "}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
             )}
-
+          </div>
+          <div className="relative z-10 flex items-center gap-4">
+            <ProgressRing value={stats.completionPct} size={82} stroke={6} />
+            <div className="hidden sm:block">
+              <p className="text-xs font-semibold">Your overall progress</p>
+              <p className="mt-1.5 text-[10px] text-muted">
+                {stats.completed} of {tasks.length} tasks complete
+              </p>
+            </div>
+          </div>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -right-16 -top-20 h-80 w-80 rounded-full border-[35px] border-brand-200/25"
+          />
+        </section>
+      </Reveal>
+      <div className="mb-6 grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatCard
+          label="Tasks to do"
+          value={String(stats.pending.length).padStart(2, "0")}
+          detail={
+            stats.dueToday.length
+              ? `${stats.dueToday.length} due today · You’ve got this`
+              : "A clear view of what’s next"
+          }
+          Icon={ListTodo}
+          index={0}
+        />
+        <StatCard
+          label="Tasks completed"
+          value={String(stats.completed).padStart(2, "0")}
+          detail={`${stats.completionPct}% of your academic to-dos`}
+          Icon={CheckCheck}
+          index={1}
+        />
+        <StatCard
+          label="Needs attention"
+          value={String(stats.overdue.length).padStart(2, "0")}
+          detail={
+            stats.overdue.length
+              ? "Overdue tasks · Take the next step"
+              : "No overdue tasks. A clear horizon."
+          }
+          Icon={AlertTriangle}
+          tone={stats.overdue.length ? "red" : "amber"}
+          index={2}
+        />
+        <StatCard
+          label="Time well spent"
+          value={minutesToLabel(stats.studyMinutes)}
+          detail={`${sessions.filter((s) => s.status === "completed").length} study sessions completed`}
+          Icon={Clock3}
+          tone="sky"
+          index={3}
+        />
+      </div>
+      <Reveal delay={0.04}>
+        <div className="mb-6 grid grid-cols-2 items-center gap-2 rounded-xl border border-line bg-surface p-3 sm:flex sm:flex-wrap sm:px-5">
+          <span className="eyebrow mr-3 hidden text-[9px] sm:inline">
+            Make your next move
+          </span>
+          {[
+            {
+              label: "Add subject",
+              Icon: BookOpen,
+              action: () => setSubjectModal(true),
+            },
+            { label: "Add task", Icon: Plus, action: openTask },
+            {
+              label: "Plan study",
+              Icon: CalendarDays,
+              action: () => setSessionModal(true),
+            },
+            {
+              label: "Add resource",
+              Icon: Library,
+              action: () => setResourceModal(true),
+            },
+          ].map(({ label, Icon, action }) => (
+            <Button
+              key={label}
+              variant="ghost"
+              size="sm"
+              onClick={action}
+              className="w-full !text-[11px] sm:w-auto sm:flex-none"
+            >
+              <Icon className="h-3.5 w-3.5 text-brand-600" />
+              {label}
+            </Button>
+          ))}
+        </div>
+      </Reveal>
+      <div className="grid items-start gap-5 xl:grid-cols-[1.75fr_1fr]">
+        <div className="min-w-0 space-y-5">
+          <Reveal delay={0.05}>
             <Card>
               <CardHeader
-                title="Priority tasks"
-                icon={<ListChecks className="h-4 w-4 text-brand-600" />}
+                title="One priority at a time"
+                description="The next small steps that make a big difference."
                 action={
-                  <Link
-                    href="/academics"
-                    className="inline-flex items-center gap-0.5 text-xs font-medium text-brand-600 hover:underline"
-                  >
-                    View all <ChevronRight className="h-3.5 w-3.5" />
+                  <Link href="/academics" className="text-link">
+                    All tasks <ArrowUpRight className="h-3.5 w-3.5" />
                   </Link>
                 }
               />
-              {stats.upcoming.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500">
-                  All caught up 🎉 Add new tasks from the Academics page.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {stats.upcoming.map((t) => (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <div className="segmented">
+                  <button
+                    className="segment"
+                    aria-pressed={taskView === "priority"}
+                    onClick={() => setTaskView("priority")}
+                  >
+                    Up next{" "}
+                    <span className="rounded bg-slate-200/70 px-1.5 py-0.5 text-[9px]">
+                      {stats.pending.length}
+                    </span>
+                  </button>
+                  <button
+                    className="segment"
+                    aria-pressed={taskView === "today"}
+                    onClick={() => setTaskView("today")}
+                  >
+                    Due today
+                  </button>
+                </div>
+                {stats.overdue.length > 0 && (
+                  <Link
+                    href="/academics?status=overdue"
+                    className="flex items-center gap-1 text-[10px] text-red-600"
+                  >
+                    <span className="h-1 w-1 rounded-full bg-red-500" />
+                    {stats.overdue.length} overdue
+                  </Link>
+                )}
+              </div>
+              {visibleTasks.length ? (
+                <AnimatedList className="space-y-2">
+                  {visibleTasks.map((task) => (
                     <TaskCard
-                      key={t.id}
-                      task={t}
-                      subject={t.subject_id ? subjectMap.get(t.subject_id) : undefined}
+                      compact
+                      key={task.id}
+                      task={task}
+                      subject={subjectMap.get(task.subject_id || "")}
                       onEdit={() => {
-                        setEditingTask(t);
+                        setEditingTask(task);
                         setTaskModal(true);
                       }}
                     />
                   ))}
-                </div>
-              )}
-            </Card>
-
-            <Card>
-              <CardHeader
-                title="Today's study sessions"
-                icon={<CalendarDays className="h-4 w-4 text-brand-600" />}
-                action={
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setSessionModal(true)}
-                  >
-                    <Plus className="h-3.5 w-3.5" /> Plan
-                  </Button>
-                }
-              />
-              {stats.todaysSessions.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500">
-                  Nothing planned for today. Even a 30-minute session helps.
-                </p>
+                </AnimatedList>
               ) : (
-                <div className="space-y-3">
-                  {stats.todaysSessions.map((s) => (
-                    <StudySessionCard key={s.id} session={s} subject={s.subject_id ? subjectMap.get(s.subject_id) : undefined} />
-                  ))}
-                </div>
+                <EmptyState
+                  compact
+                  icon={<Check className="h-6 w-6" />}
+                  title={
+                    tasks.length
+                      ? "A little breathing room."
+                      : "Your next win starts here."
+                  }
+                  description={
+                    taskView === "today"
+                      ? "Nothing is due today. Make some progress on what’s next, or give yourself a well-earned break."
+                      : "Add an assignment, an exam, or a reading. Give your next goal a clear, achievable step."
+                  }
+                  action={
+                    <Button size="sm" variant="outline" onClick={openTask}>
+                      <Plus className="h-3.5 w-3.5" /> Add a task
+                    </Button>
+                  }
+                />
               )}
             </Card>
-          </div>
-
-          {/* Right column: AI + progress */}
-          <div className="space-y-6">
-            <AiRecommendationCard />
-
+          </Reveal>
+          <Reveal delay={0.07}>
             <Card>
               <CardHeader
-                title="Subject progress"
+                title="Find your study rhythm"
                 action={
-                  <Link
-                    href="/academics"
-                    className="text-xs font-medium text-brand-600 hover:underline"
-                  >
-                    Manage
+                  <Link href="/planner" className="text-link">
+                    Open planner <ArrowUpRight className="h-3.5 w-3.5" />
                   </Link>
                 }
               />
-              {subjects.length === 0 ? (
-                <p className="text-sm text-slate-500">
-                  Add subjects to see progress here.
+              <WeekStrip
+                compact
+                start={week}
+                selected={selectedDay}
+                onSelect={setSelectedDay}
+                onWeekChange={(date) => {
+                  setWeek(date);
+                  setSelectedDay(date);
+                }}
+                counts={counts}
+              />
+              <div className="mb-3 mt-5 flex items-center justify-between">
+                <p className="text-[10px] font-semibold text-muted">
+                  {selectedDay === todayKey()
+                    ? "On your plan today"
+                    : new Date(`${selectedDay}T12:00:00`).toLocaleDateString(
+                        undefined,
+                        { weekday: "long", month: "short", day: "numeric" },
+                      )}
                 </p>
+                <button
+                  className="text-link text-[10px]"
+                  onClick={() => setSessionModal(true)}
+                >
+                  <Plus className="h-3 w-3" /> Plan a session
+                </button>
+              </div>
+              {daySessions.length ? (
+                <AnimatedList className="space-y-2">
+                  {daySessions.map((session) => (
+                    <StudySessionCard
+                      compact
+                      key={session.id}
+                      session={session}
+                      subject={subjectMap.get(session.subject_id || "")}
+                    />
+                  ))}
+                </AnimatedList>
               ) : (
-                <ul className="space-y-3">
-                  {subjects.slice(0, 6).map((s) => {
-                    const st = tasks.filter((t) => t.subject_id === s.id);
-                    const done = st.filter((t) => t.status === "completed").length;
-                    const pct = st.length ? (done / st.length) * 100 : 0;
+                <button
+                  className="group flex w-full items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-left transition-colors hover:border-brand-400 hover:bg-brand-50"
+                  onClick={() => setSessionModal(true)}
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface text-brand-600">
+                    <CalendarDays className="h-4 w-4" />
+                  </span>
+                  <span>
+                    <span className="block text-xs font-medium">
+                      A little space to focus.
+                    </span>
+                    <span className="mt-1 block text-[10px] text-muted">
+                      No sessions planned for this day. Let’s make time.
+                    </span>
+                  </span>
+                  <Plus className="ml-auto h-4 w-4 shrink-0 text-muted transition-transform group-hover:rotate-90" />
+                </button>
+              )}
+            </Card>
+          </Reveal>
+          <Reveal>
+            <Card>
+              <CardHeader
+                title="Your subjects, moving forward"
+                action={
+                  <Link href="/academics" className="text-link">
+                    View all <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                }
+              />
+              {subjects.length ? (
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {subjects.slice(0, 4).map((subject) => {
+                    const related = tasks.filter(
+                      (t) => t.subject_id === subject.id,
+                    );
+                    const done = related.filter(
+                      (t) => t.status === "completed",
+                    ).length;
+                    const pct = related.length
+                      ? (done / related.length) * 100
+                      : 0;
                     return (
-                      <li key={s.id}>
-                        <div className="mb-1 flex items-center justify-between text-xs">
-                          <span className="flex items-center gap-1.5 font-medium text-slate-700">
-                            <span
-                              className="h-2.5 w-2.5 rounded-full"
-                              style={{ backgroundColor: s.color }}
-                              aria-hidden
+                      <Link
+                        href={`/academics?subject=${subject.id}`}
+                        key={subject.id}
+                        className="group rounded-lg border border-line p-3 transition-colors hover:border-brand-300"
+                      >
+                        <div className="mb-3 flex items-center gap-2.5">
+                          <span
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                            style={{ background: `${subject.color}15` }}
+                          >
+                            <BookOpen
+                              className="h-3.5 w-3.5"
+                              style={{ color: subject.color }}
                             />
-                            {s.code || s.name}
                           </span>
-                          <span className="text-slate-500">
-                            {done}/{st.length} · {Math.round(pct)}%
-                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-[11px] font-semibold group-hover:text-brand-600">
+                              {subject.name}
+                            </p>
+                            <p className="mt-0.5 text-[9px] text-muted">
+                              {subject.code || `${related.length} tasks`}
+                            </p>
+                          </div>
                         </div>
                         <ProgressBar
                           value={pct}
-                          barClassName="bg-slate-700"
+                          color={subject.color}
+                          label={`${subject.name} progress`}
                         />
-                      </li>
+                        <p className="mt-2 flex justify-between text-[9px] text-muted">
+                          <span>
+                            {done} of {related.length} complete
+                          </span>
+                          <span>{Math.round(pct)}%</span>
+                        </p>
+                      </Link>
                     );
                   })}
-                </ul>
+                </div>
+              ) : (
+                <EmptyState
+                  compact
+                  icon={<BookOpen className="h-6 w-6" />}
+                  title="Give your semester some structure."
+                  description="Subjects connect your tasks, sessions, and resources. Start with the one you’re studying next."
+                  action={
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSubjectModal(true)}
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Add subject
+                    </Button>
+                  }
+                />
               )}
             </Card>
-
-            <Card>
-              <CardHeader title="Quick actions" />
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" size="sm" onClick={openNewTask}>
-                  <Plus className="h-3.5 w-3.5" /> Task
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setSessionModal(true)}>
-                  <Plus className="h-3.5 w-3.5" /> Session
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setResourceModal(true)}>
-                  <Plus className="h-3.5 w-3.5" /> Resource
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setSubjectModal(true)}>
-                  <Plus className="h-3.5 w-3.5" /> Subject
-                </Button>
-              </div>
-              <p className="mt-3 text-xs text-slate-400">
-                {resources.length} resource{resources.length === 1 ? "" : "s"} saved
-              </p>
-            </Card>
-          </div>
+          </Reveal>
         </div>
-      )}
-
+        <div className="min-w-0 space-y-5">
+          <Reveal delay={0.1}>
+            <AiRecommendationCard />
+          </Reveal>
+          <Reveal delay={0.12}>
+            <Card>
+              <CardHeader
+                title="Your learning, in motion"
+                action={
+                  <Link
+                    href="/insights"
+                    aria-label="View all study insights"
+                    className="text-link"
+                  >
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                }
+              />
+              <StudyChart compact sessions={sessions} />
+            </Card>
+          </Reveal>
+          <Reveal>
+            <Card>
+              <CardHeader
+                title="Keep your goals in sight"
+                icon={<Target className="h-4 w-4 text-brand-600" />}
+              />
+              {profile?.goals ? (
+                <p className="whitespace-pre-wrap text-xs leading-relaxed text-slate-600">
+                  {profile.goals}
+                </p>
+              ) : (
+                <p className="text-xs leading-relaxed text-muted">
+                  What would make this semester meaningful? A little intention
+                  can guide a lot of progress.
+                </p>
+              )}
+              <Link href="/profile" className="text-link mt-4 text-[10px]">
+                {profile?.goals
+                  ? "Revisit your goals"
+                  : "Set your academic goals"}
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </Card>
+          </Reveal>
+          <Reveal>
+            <Link
+              href="/learning"
+              className="card group flex items-center gap-3 p-5 transition-colors hover:border-brand-300"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
+                <Library className="h-4 w-4" />
+              </span>
+              <span className="flex-1">
+                <span className="block text-xs font-semibold">
+                  A growing collection of ideas
+                </span>
+                <span className="mt-1 block text-[10px] text-muted">
+                  {resources.length} resources in your library
+                </span>
+              </span>
+              <ArrowUpRight className="h-3.5 w-3.5 text-muted transition-transform group-hover:-translate-y-0.5" />
+            </Link>
+          </Reveal>
+        </div>
+      </div>
       <TaskFormModal
         open={taskModal}
         onClose={() => setTaskModal(false)}
@@ -336,11 +538,11 @@ export default function DashboardPage() {
       <SessionFormModal
         open={sessionModal}
         onClose={() => setSessionModal(false)}
+        defaultDate={selectedDay}
       />
       <SubjectFormModal
         open={subjectModal}
         onClose={() => setSubjectModal(false)}
-        editing={null}
       />
       <ResourceFormModal
         open={resourceModal}

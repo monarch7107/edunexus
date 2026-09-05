@@ -36,6 +36,7 @@ export function SubjectFormModal({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     if (!name.trim()) {
       setError("Subject name is required.");
       return;
@@ -58,9 +59,14 @@ export function SubjectFormModal({
   return (
     <Modal
       open={open}
+      busy={busy}
       onClose={onClose}
-      title={editing ? "Edit subject" : "Add a subject"}
-      description="Subjects group your tasks, study sessions and resources."
+      title={
+        editing
+          ? "A little update to your subject."
+          : "Make room for a new subject."
+      }
+      description="Connect your tasks, study sessions, and resources around what you’re learning."
     >
       <form onSubmit={submit} className="space-y-4" noValidate>
         <Field label="Subject name" htmlFor="subject-name" required>
@@ -70,7 +76,6 @@ export function SubjectFormModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             invalid={Boolean(error)}
-            autoFocus
           />
           {error && <p className="text-xs text-red-600">{error}</p>}
         </Field>
@@ -86,16 +91,16 @@ export function SubjectFormModal({
 
         <Field label="Color">
           <div className="flex flex-wrap gap-2">
-            {SUBJECT_COLORS.map((c) => (
+            {SUBJECT_COLORS.map((c, i) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setColor(c)}
-                aria-label={`Select color ${c}`}
+                aria-label={`Select ${["Indigo", "Sky", "Emerald", "Amber", "Coral", "Violet", "Rose", "Teal"][i]} subject color`}
                 aria-pressed={color === c}
                 className={cn(
                   "h-8 w-8 rounded-full ring-offset-2 transition-transform",
-                  color === c && "ring-2 ring-slate-800 scale-110"
+                  color === c && "ring-2 ring-slate-800 scale-110",
                 )}
                 style={{ backgroundColor: c }}
               />
@@ -104,10 +109,15 @@ export function SubjectFormModal({
         </Field>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={busy}
+          >
             Cancel
           </Button>
-          <Button type="submit" loading={busy}>
+          <Button type="submit" loading={busy} loadingLabel="Saving…">
             {editing ? "Save changes" : "Add subject"}
           </Button>
         </div>

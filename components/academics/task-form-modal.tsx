@@ -49,6 +49,7 @@ export function TaskFormModal({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     if (!title.trim()) {
       setError("Task title is required.");
       return;
@@ -76,9 +77,14 @@ export function TaskFormModal({
   return (
     <Modal
       open={open}
+      busy={busy}
       onClose={onClose}
-      title={editing ? "Edit task" : "Add a task"}
-      description="Track assignments, exams, projects and readings with deadlines."
+      title={
+        editing
+          ? "Refine your next step."
+          : "One small step. A little progress."
+      }
+      description="Give your next assignment, exam, or idea a clear place in your plan."
       size="lg"
     >
       <form onSubmit={submit} className="space-y-4" noValidate>
@@ -89,7 +95,6 @@ export function TaskFormModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             invalid={Boolean(error)}
-            autoFocus
           />
           {error && <p className="text-xs text-red-600">{error}</p>}
         </Field>
@@ -147,10 +152,15 @@ export function TaskFormModal({
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={busy}
+          >
             Cancel
           </Button>
-          <Button type="submit" loading={busy}>
+          <Button type="submit" loading={busy} loadingLabel="Saving…">
             {editing ? "Save changes" : "Add task"}
           </Button>
         </div>

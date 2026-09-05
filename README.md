@@ -17,10 +17,10 @@ rule-based fallback**, so the app never breaks if AI is unavailable.
 
 The app runs in two modes via a single repository interface (`lib/repo`):
 
-| Mode | When | Backend |
-| --- | --- | --- |
-| **Demo** | `NEXT_PUBLIC_SUPABASE_*` env vars unset | Browser localStorage — zero setup, fully clickable |
-| **Supabase** | env vars set | Postgres + Supabase Auth + RLS |
+| Mode         | When                                    | Backend                                            |
+| ------------ | --------------------------------------- | -------------------------------------------------- |
+| **Demo**     | `NEXT_PUBLIC_SUPABASE_*` env vars unset | Browser localStorage — zero setup, fully clickable |
+| **Supabase** | env vars set                            | Postgres + Supabase Auth + RLS                     |
 
 ## Run locally
 
@@ -52,8 +52,8 @@ the browser.
 Restart `npm run dev`. The app now uses Postgres, Supabase Auth and RLS —
 users can only ever read/write their own rows.
 
-> **SIH demo tip:** in Supabase, go to *Authentication → Sign In / Providers →
-> Email* and turn **OFF** "Confirm email" so new accounts get a session
+> **SIH demo tip:** in Supabase, go to _Authentication → Sign In / Providers →
+> Email_ and turn **OFF** "Confirm email" so new accounts get a session
 > immediately after register (no email verification step during the demo).
 
 ## Security notes
@@ -68,17 +68,17 @@ users can only ever read/write their own rows.
 
 ## Pages
 
-| Route | Purpose |
-| --- | --- |
-| `/` | Landing (problem, solution, features, CTA) |
-| `/register`, `/login` | Email/password auth |
-| `/onboarding` | Name, course, branch, semester, goals |
-| `/dashboard` | Greeting, priority tasks, overdue, today's sessions, AI plan, progress, quick actions |
-| `/academics` | Subjects (CRUD) + tasks (CRUD, filters, deadlines, priorities, status) |
-| `/planner` | Study sessions by date, study-time totals |
-| `/learning` | Notes & links per subject, search/filter |
-| `/insights` | Completion %, overdue, 7-day study chart, subject progress, priorities |
-| `/profile` | Edit details, backend mode, sign out |
+| Route                 | Purpose                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| `/`                   | Landing (problem, solution, features, CTA)                                            |
+| `/register`, `/login` | Email/password auth                                                                   |
+| `/onboarding`         | Name, course, branch, semester, goals                                                 |
+| `/dashboard`          | Greeting, priority tasks, overdue, today's sessions, AI plan, progress, quick actions |
+| `/academics`          | Subjects (CRUD) + tasks (CRUD, filters, deadlines, priorities, status)                |
+| `/planner`            | Study sessions by date, study-time totals                                             |
+| `/learning`           | Notes & links per subject, search/filter                                              |
+| `/insights`           | Completion %, overdue, 7-day study chart, subject progress, priorities                |
+| `/profile`            | Edit details, backend mode, sign out                                                  |
 
 ## AI behavior (spec §14)
 
@@ -92,3 +92,77 @@ server-side; AI output is validated/shape-checked before rendering.
 
 - **Vercel**: import the repo, set the environment variables above, deploy.
 - Works out of the box in demo mode with no env vars set.
+
+## Workspace design & preferences
+
+The UI uses a shared design system rather than page-specific color overrides:
+
+- **DM Sans + Manrope variable fonts**, served locally by the app.
+- Semantic surface, text, status, border, and accent tokens in `app/globals.css`
+  and `tailwind.config.ts`.
+- **Light, dark, and system appearance**, with Forest, Iris, and Terracotta
+  accents. Preferences are stored on the current device, synchronized across
+  tabs, and applied by a small pre-paint script to prevent a theme flash.
+- Framer Motion list, dialog, content, chart, and notification transitions;
+  CSS button feedback; real operation loading states and skeletons. Both the
+  system reduced-motion setting and the optional in-app setting are respected.
+- Keyboard-accessible dialogs with focus trapping/restoration, focus styles,
+  associated field hints/errors, chart labels, and responsive navigation.
+- Workspace search (`Ctrl/Cmd + K`) opens matching subjects, tasks, sessions,
+  and resources in their existing routes. Search, status, priority, subject,
+  calendar, resource-view, and chart-range controls operate on real data.
+
+### Learning files: an intentional capability boundary
+
+**Direct file uploads are not enabled.** This repository has no configured
+Supabase Storage bucket or storage policies, and the resource schema supports
+notes and links—not stored file records. No bucket, schema migration, public
+upload endpoint, or privileged credential has been added for the redesign.
+
+The file workflow provides drag-and-drop/browse selection, type and 20 MB size
+validation, file details, local image previews, and remove/cancel controls.
+It explicitly labels files **“Selected locally · Not uploaded”**, disables the
+upload action, and clears selection on close. It sends **no upload request**,
+creates **no resource record**, and displays **no fake progress or success**.
+Object URLs are revoked after use.
+
+Students can continue saving notes and hosted document/image links through the
+existing repository. PDFs and Word/image URLs are visually identified in the
+library, and full notes can be read in a dialog. Enabling actual file transfer
+later requires an authenticated private storage integration and reviewed
+owner-scoped policies; it must not be enabled by simply removing the UI guard.
+
+## UI verification
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+
+# In demo mode (NEXT_PUBLIC_SUPABASE_* unset), start the app:
+npm run start -- --hostname 0.0.0.0
+# In another terminal:
+npx playwright install chromium
+npm run test:e2e
+```
+
+The browser suite creates isolated test accounts and covers registration,
+login/logout, onboarding, CRUD and completion flows, subject unlinking,
+recommendation fallback and retries, save failures, search, theme persistence,
+file-capability honesty, focus behavior, and WCAG A/AA automated checks.
+It exercises mobile navigation and both light and dark themes. Test traces,
+screenshots, and reports are ignored by Git. Set `PLAYWRIGHT_BASE_URL` to test a
+separately running instance; `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` optionally
+selects an existing Chromium binary.
+
+**Scope:** the repository interface, Supabase implementation, schema, RLS,
+middleware, and recommendation API are unchanged. The shared data provider now
+surfaces safe, retryable read errors and friendly mutation errors rather than
+silently hiding failures or displaying raw database details. SQL calendar dates
+are interpreted as local dates so planner days do not shift across timezones.
+Live Supabase/email delivery and external AI-provider connectivity require an
+appropriately configured deployment and are not exercised by local-mode tests.
+
+**Dependency note:** `npm audit` currently flags the existing Next.js 14 tree.
+The suggested remediation is a major framework upgrade; that migration is
+separate from this UI/UX change and has not been applied automatically.

@@ -28,6 +28,14 @@ export class SupabaseRepo implements Repo {
   readonly mode = "supabase" as const;
   private client = createClient();
 
+  private async requireUserId(): Promise<string> {
+    const {
+      data: { user },
+    } = await this.client.auth.getUser();
+    if (!user) throw new Error("Not signed in");
+    return user.id;
+  }
+
   async signUp(email: string, password: string): Promise<AuthUser> {
     const { data, error } = await this.client.auth.signUp({
       email: email.trim(),
@@ -102,9 +110,11 @@ export class SupabaseRepo implements Repo {
   }
 
   async createSubject(input: SubjectInput): Promise<Subject> {
+    const user_id = await this.requireUserId();
     const { data, error } = await this.client
       .from("subjects")
       .insert({
+        user_id,
         name: input.name.trim(),
         code: input.code?.trim() ?? "",
         color: input.color ?? "#3b62f6",
@@ -153,9 +163,11 @@ export class SupabaseRepo implements Repo {
   }
 
   async createTask(input: TaskInput): Promise<Task> {
+    const user_id = await this.requireUserId();
     const { data, error } = await this.client
       .from("tasks")
       .insert({
+        user_id,
         subject_id: input.subject_id,
         title: input.title.trim(),
         description: input.description?.trim() ?? "",
@@ -220,9 +232,11 @@ export class SupabaseRepo implements Repo {
   }
 
   async createSession(input: SessionInput): Promise<StudySession> {
+    const user_id = await this.requireUserId();
     const { data, error } = await this.client
       .from("study_sessions")
       .insert({
+        user_id,
         subject_id: input.subject_id,
         title: input.title.trim(),
         planned_date: input.planned_date,
@@ -270,9 +284,11 @@ export class SupabaseRepo implements Repo {
   }
 
   async createResource(input: ResourceInput): Promise<Resource> {
+    const user_id = await this.requireUserId();
     const { data, error } = await this.client
       .from("resources")
       .insert({
+        user_id,
         subject_id: input.subject_id,
         title: input.title.trim(),
         content: input.content?.trim() ?? "",
@@ -305,7 +321,9 @@ export class SupabaseRepo implements Repo {
     input_snapshot: Record<string, unknown>,
     output_text: string
   ): Promise<void> {
+    const user_id = await this.requireUserId();
     await this.client.from("ai_recommendations").insert({
+      user_id,
       recommendation_type,
       input_snapshot,
       output_text,

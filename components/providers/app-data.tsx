@@ -25,6 +25,7 @@ import type {
   TaskInput,
 } from "@/lib/types";
 import { useToast } from "./toast";
+import { friendlyError } from "@/lib/errors";
 
 interface AppDataValue {
   repo: Repo;
@@ -37,6 +38,7 @@ interface AppDataValue {
   resources: Resource[];
   recommendations: AiRecommendation[];
   loading: boolean;
+  error: string | null;
   refresh: () => Promise<void>;
   // auth
   signUp: (email: string, password: string) => Promise<void>;
@@ -74,23 +76,27 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
-  const [recommendations, setRecommendations] = useState<AiRecommendation[]>([]);
+  const [recommendations, setRecommendations] = useState<AiRecommendation[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const u = await repo.getUser();
-    setUser(u);
-    if (!u) {
-      setProfile(null);
-      setSubjects([]);
-      setTasks([]);
-      setSessions([]);
-      setResources([]);
-      setRecommendations([]);
-      setLoading(false);
-      return;
-    }
     try {
+      const u = await repo.getUser();
+      setUser(u);
+      if (!u) {
+        setProfile(null);
+        setSubjects([]);
+        setTasks([]);
+        setSessions([]);
+        setResources([]);
+        setRecommendations([]);
+        setLoading(false);
+        setError(null);
+        return;
+      }
       const [p, s, t, se, r, rec] = await Promise.all([
         repo.getProfile(),
         repo.listSubjects(),
@@ -105,8 +111,11 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       setSessions(se);
       setResources(r);
       setRecommendations(rec);
+      setError(null);
     } catch {
-      // Transient read failure — surface nothing destructive; user can retry.
+      setError(
+        "We couldn’t refresh your workspace. Your saved work is safe. Check your connection and try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -127,13 +136,12 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         await refresh();
         if (okMessage) toast.success(okMessage);
       } catch (e) {
-        const message =
-          e instanceof Error ? e.message : "Something went wrong. Please try again.";
+        const message = friendlyError(e);
         toast.error(message);
         throw e;
       }
     },
-    [refresh, toast]
+    [refresh, toast],
   );
 
   const value = useMemo<AppDataValue>(
@@ -148,6 +156,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       resources,
       recommendations,
       loading,
+      error,
       refresh,
       signUp: (email, password) =>
         run(async () => {
@@ -186,9 +195,12 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           await repo.updateTask(id, input);
         }, "Task updated."),
       setTaskStatus: (id, completed) =>
-        run(async () => {
-          await repo.setTaskStatus(id, completed);
-        }, completed ? "Task completed. Nice work!" : "Task marked pending."),
+        run(
+          async () => {
+            await repo.setTaskStatus(id, completed);
+          },
+          completed ? "Task completed. Nice work!" : "Task marked pending.",
+        ),
       deleteTask: (id) =>
         run(async () => {
           await repo.deleteTask(id);
@@ -198,9 +210,12 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           await repo.createSession(input);
         }, "Study session planned."),
       setSessionStatus: (id, completed) =>
-        run(async () => {
-          await repo.setSessionStatus(id, completed);
-        }, completed ? "Session completed!" : "Session moved back to planned."),
+        run(
+          async () => {
+            await repo.setSessionStatus(id, completed);
+          },
+          completed ? "Session completed!" : "Session moved back to planned.",
+        ),
       deleteSession: (id) =>
         run(async () => {
           await repo.deleteSession(id);
@@ -214,10 +229,25 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           await repo.deleteResource(id);
         }, "Resource deleted."),
     }),
-    [repo, user, profile, subjects, tasks, sessions, resources, recommendations, loading, refresh, run]
+    [
+      repo,
+      user,
+      profile,
+      subjects,
+      tasks,
+      sessions,
+      resources,
+      recommendations,
+      loading,
+      error,
+      refresh,
+      run,
+    ],
   );
 
-  return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
+  return (
+    <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>
+  );
 }
 
 export function useApp(): AppDataValue {

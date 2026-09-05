@@ -7,9 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function uid(): string {
-  return (
-    Date.now().toString(36) + Math.random().toString(36).slice(2, 10)
-  );
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 }
 
 export function nowIso(): string {
@@ -27,6 +25,13 @@ export function toDateInput(d: Date = new Date()): string {
 /** Parse a stored due_date (date or datetime) to a local yyyy-mm-dd key. */
 export function dayKey(iso: string | null): string | null {
   if (!iso) return null;
+  // SQL date values represent local calendar days, not UTC instants.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    const local = new Date(`${iso}T12:00:00`);
+    return !Number.isNaN(local.getTime()) && toDateInput(local) === iso
+      ? iso
+      : null;
+  }
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
   return toDateInput(d);
@@ -36,7 +41,8 @@ export function todayKey(): string {
   return toDateInput(new Date());
 }
 
-export type DueState = "overdue" | "today" | "tomorrow" | "this-week" | "later" | "none";
+export type DueState =
+  "overdue" | "today" | "tomorrow" | "this-week" | "later" | "none";
 
 export function dueState(due: string | null): DueState {
   const key = dayKey(due);
@@ -45,9 +51,13 @@ export function dueState(due: string | null): DueState {
   if (key < today) return "overdue";
   if (key === today) return "today";
   const t = new Date();
-  const tomorrow = toDateInput(new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1));
+  const tomorrow = toDateInput(
+    new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1),
+  );
   if (key === tomorrow) return "tomorrow";
-  const in7 = toDateInput(new Date(t.getFullYear(), t.getMonth(), t.getDate() + 7));
+  const in7 = toDateInput(
+    new Date(t.getFullYear(), t.getMonth(), t.getDate() + 7),
+  );
   if (key <= in7) return "this-week";
   return "later";
 }
@@ -63,18 +73,30 @@ export function formatDue(due: string | null): string {
   });
 }
 
-export function dueBadge(due: string | null): { label: string; className: string } {
+export function dueBadge(due: string | null): {
+  label: string;
+  className: string;
+} {
   switch (dueState(due)) {
     case "overdue":
       return { label: "Overdue", className: "bg-red-100 text-red-700" };
     case "today":
-      return { label: "Due today", className: "bg-red-50 text-red-600 ring-1 ring-red-200" };
+      return {
+        label: "Due today",
+        className: "bg-red-50 text-red-600 ring-1 ring-red-200",
+      };
     case "tomorrow":
-      return { label: "Due tomorrow", className: "bg-amber-100 text-amber-700" };
+      return {
+        label: "Due tomorrow",
+        className: "bg-amber-100 text-amber-700",
+      };
     case "this-week":
       return { label: "This week", className: "bg-sky-100 text-sky-700" };
     default:
-      return { label: formatDue(due), className: "bg-slate-100 text-slate-600" };
+      return {
+        label: formatDue(due),
+        className: "bg-slate-100 text-slate-600",
+      };
   }
 }
 

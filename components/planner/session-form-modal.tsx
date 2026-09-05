@@ -16,10 +16,12 @@ export function SessionFormModal({
   open,
   onClose,
   defaultSubjectId,
+  defaultDate,
 }: {
   open: boolean;
   onClose: () => void;
   defaultSubjectId?: string | null;
+  defaultDate?: string;
 }) {
   const { subjects, createSession } = useApp();
 
@@ -27,29 +29,28 @@ export function SessionFormModal({
   const [subjectId, setSubjectId] = useState("");
   const [plannedDate, setPlannedDate] = useState(toDateInput());
   const [duration, setDuration] = useState("45");
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<{ title?: string; date?: string }>({});
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (open) {
       setTitle("");
       setSubjectId(defaultSubjectId ?? "");
-      setPlannedDate(toDateInput());
+      setPlannedDate(defaultDate || toDateInput());
       setDuration("45");
-      setError("");
+      setErrors({});
     }
-  }, [open, defaultSubjectId]);
+  }, [open, defaultSubjectId, defaultDate]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim()) {
-      setError("Give your session a title, e.g. 'Revise OS deadlocks'.");
-      return;
-    }
-    if (!plannedDate) {
-      setError("Pick a planned date.");
-      return;
-    }
+    if (busy) return;
+    const next: typeof errors = {};
+    if (!title.trim())
+      next.title = "Give your session a title, e.g. ‘Revise OS deadlocks’.";
+    if (!plannedDate) next.date = "Pick a planned date for your session.";
+    setErrors(next);
+    if (Object.keys(next).length) return;
     setBusy(true);
     try {
       await createSession({
@@ -69,6 +70,7 @@ export function SessionFormModal({
   return (
     <Modal
       open={open}
+      busy={busy}
       onClose={onClose}
       title="Plan a study session"
       description="Schedule focused time for a subject or topic."
@@ -80,10 +82,11 @@ export function SessionFormModal({
             placeholder="e.g. Revise normalization (DBMS)"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            invalid={Boolean(error)}
-            autoFocus
+            invalid={Boolean(errors.title)}
           />
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {errors.title && (
+            <p className="text-xs text-red-600">{errors.title}</p>
+          )}
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -114,16 +117,25 @@ export function SessionFormModal({
               id="session-date"
               type="date"
               value={plannedDate}
+              invalid={Boolean(errors.date)}
               onChange={(e) => setPlannedDate(e.target.value)}
             />
+            {errors.date && (
+              <p className="text-xs text-red-600">{errors.date}</p>
+            )}
           </Field>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={busy}
+          >
             Cancel
           </Button>
-          <Button type="submit" loading={busy}>
+          <Button type="submit" loading={busy} loadingLabel="Saving…">
             Plan session
           </Button>
         </div>

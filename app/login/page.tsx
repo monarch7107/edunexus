@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthScreen } from "@/components/auth/auth-screen";
 import { Button } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/field";
+import { Field, Input, PasswordInput } from "@/components/ui/field";
 import { useApp } from "@/components/providers/app-data";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,13 +15,16 @@ export default function LoginPage() {
   const { signIn } = useApp();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const next: typeof errors = {};
-    if (!EMAIL_RE.test(email.trim())) next.email = "Enter a valid email address.";
+    if (!EMAIL_RE.test(email.trim()))
+      next.email = "Enter a valid email address.";
     if (!password) next.password = "Enter your password.";
     setErrors(next);
     if (Object.keys(next).length) return;
@@ -39,35 +42,39 @@ export default function LoginPage() {
 
   return (
     <AuthScreen
-      title="Welcome back"
-      subtitle="Log in to your EduNexus workspace."
+      title="Welcome back to your space."
+      subtitle="A fresh day, a clear plan. Let’s pick up where you left off."
       footer={
         <>
           New to EduNexus?{" "}
-          <Link href="/register" className="font-medium text-brand-600 hover:underline">
+          <Link
+            href="/register"
+            className="font-medium text-brand-600 hover:underline"
+          >
             Create an account
           </Link>
         </>
       }
     >
-      <form onSubmit={onSubmit} noValidate className="space-y-4">
+      <form onSubmit={onSubmit} noValidate className="space-y-5">
         <Field label="Email" htmlFor="email" required>
           <Input
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="you@college.edu.in"
+            placeholder="you@university.edu"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             invalid={Boolean(errors.email)}
           />
-          {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
+          {errors.email && (
+            <p className="text-xs text-red-600">{errors.email}</p>
+          )}
         </Field>
 
         <Field label="Password" htmlFor="password" required>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="current-password"
             placeholder="••••••••"
             value={password}
@@ -79,8 +86,14 @@ export default function LoginPage() {
           )}
         </Field>
 
-        <Button type="submit" className="w-full" loading={busy}>
-          Log in
+        <Button
+          type="submit"
+          className="mt-2 w-full"
+          size="lg"
+          loading={busy}
+          loadingLabel="Opening your workspace…"
+        >
+          Log in to your workspace
         </Button>
       </form>
     </AuthScreen>

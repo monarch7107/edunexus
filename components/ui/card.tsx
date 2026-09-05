@@ -1,30 +1,37 @@
 import { cn } from "@/lib/utils";
-
 export function Card({
   className,
   children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return <div className={cn("card p-4 sm:p-5", className)}>{children}</div>;
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={cn("card p-5 sm:p-6", className)} {...props}>
+      {children}
+    </div>
+  );
 }
-
 export function CardHeader({
   title,
   action,
   icon,
+  description,
 }: {
   title: string;
   action?: React.ReactNode;
   icon?: React.ReactNode;
+  description?: string;
 }) {
   return (
-    <div className="mb-4 flex items-center justify-between gap-2">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-        {icon}
-        {title}
-      </h3>
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 className="section-title flex items-center gap-2">
+          {icon}
+          {title}
+        </h2>
+        {description && (
+          <p className="mt-1 text-xs text-muted">{description}</p>
+        )}
+      </div>
       {action}
     </div>
   );

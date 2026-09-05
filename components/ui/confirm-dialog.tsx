@@ -26,7 +26,7 @@ export function ConfirmDialog({
   const [busy, setBusy] = useState(false);
 
   return (
-    <Modal open={open} onClose={onClose} title={title} size="sm">
+    <Modal busy={busy} open={open} onClose={onClose} title={title} size="sm">
       <p className="text-sm text-slate-600">{message}</p>
       <div className="mt-5 flex justify-end gap-2">
         <Button variant="outline" onClick={onClose} disabled={busy}>
@@ -40,6 +40,8 @@ export function ConfirmDialog({
             try {
               await onConfirm();
               onClose();
+            } catch {
+              // The data provider surfaces the error; keep the dialog open.
             } finally {
               setBusy(false);
             }

@@ -22,3 +22,8 @@ npm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# browser test / visual QA output
+/test-results/
+/playwright-report/
+/.artifacts/

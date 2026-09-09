@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { DEMO_COOKIE } from "./lib/session-cookie";
+import { createCookieSync } from "./lib/supabase/cookie-sync";
 
 const PROTECTED = [
   "/dashboard",
@@ -41,15 +42,20 @@ export async function middleware(request: NextRequest) {
 
   // Supabase mode: refresh session, then guard routes.
   let response = NextResponse.next({ request });
+  const sync = createCookieSync(request.cookies);
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON, {
     cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        );
+      getAll: () => sync.getAll(),
+      setAll: (
+        cookiesToSet: { name: string; value: string; options: CookieOptions }[],
+      ) => {
+        sync.setAll(cookiesToSet);
+        // Propagate to the pass-through response immediately; redirect
+        // responses created below get the recorded updates replayed so a
+        // refreshed session (or a cookie clearing) is never dropped.
+        for (const { name, value, options } of cookiesToSet) {
+          response.cookies.set(name, value, options);
+        }
       },
     },
   });
@@ -61,12 +67,16 @@ export async function middleware(request: NextRequest) {
   if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return NextResponse.redirect(url);
+    const redirect = NextResponse.redirect(url);
+    sync.applyTo(redirect);
+    return redirect;
   }
   if (isAuthPage && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    const redirect = NextResponse.redirect(url);
+    sync.applyTo(redirect);
+    return redirect;
   }
   return response;
 }

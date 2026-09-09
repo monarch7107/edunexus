@@ -24,6 +24,7 @@ import { ProgressRing } from "@/components/ui/progress-bar";
 import { SessionFormModal } from "@/components/planner/session-form-modal";
 import { StudySessionCard } from "@/components/planner/study-session-card";
 import { WeekStrip, weekStart } from "@/components/planner/week-strip";
+import { Copilot } from "@/components/ai/copilot";
 import { useApp } from "@/components/providers/app-data";
 import { dayKey, minutesToLabel, todayKey } from "@/lib/utils";
 import type { StudySession } from "@/lib/types";
@@ -115,6 +116,9 @@ export default function PlannerPage() {
       </div>
       <div className="grid items-start gap-5 xl:grid-cols-[1.8fr_1fr]">
         <div className="min-w-0 space-y-5">
+          <Reveal>
+            <Copilot />
+          </Reveal>
           <Reveal>
             <Card>
               <CardHeader

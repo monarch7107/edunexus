@@ -1,5 +1,7 @@
 import type { Repo } from "./types";
+import { RepoError, toRepoError } from "./errors";
 import { createClient } from "../supabase/client";
+import { isOnboarded, validateOnboarding } from "../profile";
 import type {
   AiRecommendation,
   AuthUser,
@@ -21,18 +23,26 @@ import type {
 type ProfileRow = Omit<Profile, "onboarded">;
 
 function toProfile(row: ProfileRow): Profile {
-  return { ...row, onboarded: Boolean(row.full_name) };
+  // Completion requires name + course + branch (see lib/profile.ts) — a
+  // partial/legacy full_name alone must not count as onboarded.
+  return { ...row, onboarded: isOnboarded(row) };
 }
 
 export class SupabaseRepo implements Repo {
   readonly mode = "supabase" as const;
   private client = createClient();
 
+  /**
+   * Resolve the signed-in user id. Auth/session failures throw a categorized
+   * `auth` error — they are never reported as "no user".
+   */
   private async requireUserId(): Promise<string> {
     const {
       data: { user },
+      error,
     } = await this.client.auth.getUser();
-    if (!user) throw new Error("Not signed in");
+    if (error) throw toRepoError(error, "Could not verify your session.");
+    if (!user) throw new RepoError("auth", "Not signed in");
     return user.id;
   }
 
@@ -41,8 +51,15 @@ export class SupabaseRepo implements Repo {
       email: email.trim(),
       password,
     });
-    if (error) throw new Error(error.message);
-    if (!data.user) throw new Error("Sign up failed. Please try again.");
+    if (error) throw toRepoError(error, "Sign up failed. Please try again.");
+    if (!data.user) {
+      // Email confirmation may be required, or the request was throttled —
+      // either way this is an auth outcome, not a silent success.
+      throw new RepoError(
+        "auth",
+        "Sign up needs verification. Please check your email, then log in.",
+      );
+    }
     return { id: data.user.id, email: data.user.email ?? email };
   }
 
@@ -51,19 +68,25 @@ export class SupabaseRepo implements Repo {
       email: email.trim(),
       password,
     });
-    if (error) throw new Error(error.message);
-    if (!data.user) throw new Error("Sign in failed. Please try again.");
+    if (error) throw toRepoError(error, "Sign in failed. Please try again.");
+    if (!data.user)
+      throw new RepoError("auth", "Sign in failed. Please try again.");
     return { id: data.user.id, email: data.user.email ?? email };
   }
 
   async signOut(): Promise<void> {
-    await this.client.auth.signOut();
+    const { error } = await this.client.auth.signOut();
+    if (error) throw toRepoError(error, "Sign out failed. Please try again.");
   }
 
   async getUser(): Promise<AuthUser | null> {
     const {
       data: { user },
+      error,
     } = await this.client.auth.getUser();
+    // An error here means the session could not be verified (expired token,
+    // network failure, …) — that is an auth failure, not "signed out".
+    if (error) throw toRepoError(error, "Could not verify your session.");
     return user ? { id: user.id, email: user.email ?? "" } : null;
   }
 
@@ -72,17 +95,22 @@ export class SupabaseRepo implements Repo {
       .from("profiles")
       .select("*")
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not load your profile.");
+    // No row yet is expected absence (e.g. brand-new account) — not a failure.
     return (data as ProfileRow | null) ? toProfile(data as ProfileRow) : null;
   }
 
   async upsertProfile(input: ProfileInput): Promise<Profile> {
-    const {
-      data: { user },
-    } = await this.client.auth.getUser();
-    if (!user) throw new Error("Not signed in");
+    const fieldErrors = validateOnboarding(input);
+    if (Object.keys(fieldErrors).length > 0) {
+      throw new RepoError(
+        "validation",
+        "Name, course, and branch are required to complete onboarding.",
+      );
+    }
+    const userId = await this.requireUserId();
     const row = {
-      id: user.id,
+      id: userId,
       full_name: input.full_name.trim(),
       course: input.course.trim(),
       branch: input.branch.trim(),
@@ -96,7 +124,7 @@ export class SupabaseRepo implements Repo {
       .upsert(row, { onConflict: "id" })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not save your profile.");
     return toProfile(data as ProfileRow);
   }
 
@@ -105,11 +133,14 @@ export class SupabaseRepo implements Repo {
       .from("subjects")
       .select("*")
       .order("created_at", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not load your subjects.");
     return (data as Subject[]) ?? [];
   }
 
   async createSubject(input: SubjectInput): Promise<Subject> {
+    if (!input.name?.trim()) {
+      throw new RepoError("validation", "Subject name is required.");
+    }
     const user_id = await this.requireUserId();
     const { data, error } = await this.client
       .from("subjects")
@@ -121,13 +152,13 @@ export class SupabaseRepo implements Repo {
       })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not create the subject.");
     return data as Subject;
   }
 
   async updateSubject(
     id: string,
-    input: Partial<SubjectInput>
+    input: Partial<SubjectInput>,
   ): Promise<Subject> {
     const { data, error } = await this.client
       .from("subjects")
@@ -140,17 +171,41 @@ export class SupabaseRepo implements Repo {
       .eq("id", id)
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    // Zero matching rows surface as PGRST116 → categorized `not-found`.
+    if (error) throw toRepoError(error, "Could not update the subject.");
     return data as Subject;
   }
 
   async deleteSubject(id: string): Promise<void> {
     // Detach children first (FKs are ON DELETE SET NULL), then delete.
-    await this.client.from("tasks").update({ subject_id: null }).eq("subject_id", id);
-    await this.client.from("study_sessions").update({ subject_id: null }).eq("subject_id", id);
-    await this.client.from("resources").update({ subject_id: null }).eq("subject_id", id);
-    const { error } = await this.client.from("subjects").delete().eq("id", id);
-    if (error) throw new Error(error.message);
+    // Detach failures are surfaced — silently orphaning student work is worse.
+    const detachTasks = await this.client
+      .from("tasks")
+      .update({ subject_id: null })
+      .eq("subject_id", id);
+    if (detachTasks.error)
+      throw toRepoError(detachTasks.error, "Could not delete the subject.");
+    const detachSessions = await this.client
+      .from("study_sessions")
+      .update({ subject_id: null })
+      .eq("subject_id", id);
+    if (detachSessions.error)
+      throw toRepoError(detachSessions.error, "Could not delete the subject.");
+    const detachResources = await this.client
+      .from("resources")
+      .update({ subject_id: null })
+      .eq("subject_id", id);
+    if (detachResources.error)
+      throw toRepoError(detachResources.error, "Could not delete the subject.");
+    const { data, error } = await this.client
+      .from("subjects")
+      .delete()
+      .eq("id", id)
+      .select("id");
+    if (error) throw toRepoError(error, "Could not delete the subject.");
+    if (!data || data.length === 0) {
+      throw new RepoError("not-found", "Subject not found");
+    }
   }
 
   async listTasks(): Promise<Task[]> {
@@ -158,11 +213,14 @@ export class SupabaseRepo implements Repo {
       .from("tasks")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not load your tasks.");
     return (data as Task[]) ?? [];
   }
 
   async createTask(input: TaskInput): Promise<Task> {
+    if (!input.title?.trim()) {
+      throw new RepoError("validation", "Task title is required.");
+    }
     const user_id = await this.requireUserId();
     const { data, error } = await this.client
       .from("tasks")
@@ -177,7 +235,7 @@ export class SupabaseRepo implements Repo {
       })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not create the task.");
     return data as Task;
   }
 
@@ -198,7 +256,7 @@ export class SupabaseRepo implements Repo {
       .eq("id", id)
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not update the task.");
     return data as Task;
   }
 
@@ -213,13 +271,20 @@ export class SupabaseRepo implements Repo {
       .eq("id", id)
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not update the task.");
     return data as Task;
   }
 
   async deleteTask(id: string): Promise<void> {
-    const { error } = await this.client.from("tasks").delete().eq("id", id);
-    if (error) throw new Error(error.message);
+    const { data, error } = await this.client
+      .from("tasks")
+      .delete()
+      .eq("id", id)
+      .select("id");
+    if (error) throw toRepoError(error, "Could not delete the task.");
+    if (!data || data.length === 0) {
+      throw new RepoError("not-found", "Task not found");
+    }
   }
 
   async listSessions(): Promise<StudySession[]> {
@@ -227,11 +292,14 @@ export class SupabaseRepo implements Repo {
       .from("study_sessions")
       .select("*")
       .order("planned_date", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not load your study sessions.");
     return (data as StudySession[]) ?? [];
   }
 
   async createSession(input: SessionInput): Promise<StudySession> {
+    if (!input.title?.trim()) {
+      throw new RepoError("validation", "Session title is required.");
+    }
     const user_id = await this.requireUserId();
     const { data, error } = await this.client
       .from("study_sessions")
@@ -244,13 +312,13 @@ export class SupabaseRepo implements Repo {
       })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not plan the study session.");
     return data as StudySession;
   }
 
   async setSessionStatus(
     id: string,
-    completed: boolean
+    completed: boolean,
   ): Promise<StudySession> {
     const { data, error } = await this.client
       .from("study_sessions")
@@ -262,16 +330,20 @@ export class SupabaseRepo implements Repo {
       .eq("id", id)
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not update the study session.");
     return data as StudySession;
   }
 
   async deleteSession(id: string): Promise<void> {
-    const { error } = await this.client
+    const { data, error } = await this.client
       .from("study_sessions")
       .delete()
-      .eq("id", id);
-    if (error) throw new Error(error.message);
+      .eq("id", id)
+      .select("id");
+    if (error) throw toRepoError(error, "Could not delete the study session.");
+    if (!data || data.length === 0) {
+      throw new RepoError("not-found", "Study session not found");
+    }
   }
 
   async listResources(): Promise<Resource[]> {
@@ -279,11 +351,14 @@ export class SupabaseRepo implements Repo {
       .from("resources")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not load your resources.");
     return (data as Resource[]) ?? [];
   }
 
   async createResource(input: ResourceInput): Promise<Resource> {
+    if (!input.title?.trim()) {
+      throw new RepoError("validation", "Resource title is required.");
+    }
     const user_id = await this.requireUserId();
     const { data, error } = await this.client
       .from("resources")
@@ -297,13 +372,20 @@ export class SupabaseRepo implements Repo {
       })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not save the resource.");
     return data as Resource;
   }
 
   async deleteResource(id: string): Promise<void> {
-    const { error } = await this.client.from("resources").delete().eq("id", id);
-    if (error) throw new Error(error.message);
+    const { data, error } = await this.client
+      .from("resources")
+      .delete()
+      .eq("id", id)
+      .select("id");
+    if (error) throw toRepoError(error, "Could not delete the resource.");
+    if (!data || data.length === 0) {
+      throw new RepoError("not-found", "Resource not found");
+    }
   }
 
   async listRecommendations(): Promise<AiRecommendation[]> {
@@ -312,21 +394,24 @@ export class SupabaseRepo implements Repo {
       .select("*")
       .order("created_at", { ascending: false })
       .limit(20);
-    if (error) throw new Error(error.message);
+    if (error) throw toRepoError(error, "Could not load recommendations.");
     return (data as AiRecommendation[]) ?? [];
   }
 
   async saveRecommendation(
     recommendation_type: string,
     input_snapshot: Record<string, unknown>,
-    output_text: string
+    output_text: string,
   ): Promise<void> {
     const user_id = await this.requireUserId();
-    await this.client.from("ai_recommendations").insert({
+    const { error } = await this.client.from("ai_recommendations").insert({
       user_id,
       recommendation_type,
       input_snapshot,
       output_text,
     });
+    // Callers treat history as best-effort and catch this explicitly; the
+    // repo itself must not silently swallow a failed write.
+    if (error) throw toRepoError(error, "Could not save the recommendation.");
   }
 }

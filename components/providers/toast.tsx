@@ -9,11 +9,11 @@ import {
   useState,
 } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Check, AlertCircle, X } from "lucide-react";
+import { Check, AlertCircle, AlertTriangle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "./theme";
 
-type ToastKind = "success" | "error";
+type ToastKind = "success" | "error" | "warning";
 interface Toast {
   id: string;
   kind: ToastKind;
@@ -22,6 +22,7 @@ interface Toast {
 interface ToastContextValue {
   success: (message: string) => void;
   error: (message: string) => void;
+  warning: (message: string) => void;
 }
 const ToastContext = createContext<ToastContextValue | null>(null);
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -43,7 +44,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           remove(id);
           timers.current.delete(timer);
         },
-        kind === "error" ? 6500 : 4200,
+        kind === "success" ? 4200 : 6500,
       );
       timers.current.add(timer);
     },
@@ -57,6 +58,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     () => ({
       success: (message) => push("success", message),
       error: (message) => push("error", message),
+      warning: (message) => push("warning", message),
     }),
     [push],
   );
@@ -81,7 +83,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, x: quiet ? 0 : 24 }}
               transition={{ duration: quiet ? 0 : 0.2 }}
-              role={t.kind === "error" ? "alert" : "status"}
+              role={t.kind === "success" ? "status" : "alert"}
               className="pointer-events-auto flex items-center gap-3 rounded-xl border border-line bg-surface p-4 shadow-popover"
             >
               <span
@@ -89,11 +91,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                   "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
                   t.kind === "success"
                     ? "bg-emerald-100 text-emerald-700"
-                    : "bg-red-100 text-red-700",
+                    : t.kind === "warning"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-red-100 text-red-700",
                 )}
               >
                 {t.kind === "success" ? (
                   <Check className="h-4 w-4" />
+                ) : t.kind === "warning" ? (
+                  <AlertTriangle className="h-4 w-4" />
                 ) : (
                   <AlertCircle className="h-4 w-4" />
                 )}

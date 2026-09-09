@@ -16,6 +16,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { useQuietMotion } from "@/components/ui/motion";
 import { useApp } from "@/components/providers/app-data";
 import { cn } from "@/lib/utils";
+import { validateOnboarding, type OnboardingErrors } from "@/lib/profile";
 const SEMESTERS = Array.from({ length: 10 }, (_, i) => ({
   value: String(i + 1),
   label: `Semester ${i + 1}`,
@@ -44,14 +45,15 @@ export default function OnboardingPage() {
     profile?.year_of_study ? String(profile.year_of_study) : "",
   );
   const [goals, setGoals] = useState(profile?.goals || "");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<OnboardingErrors>({});
   const [busy, setBusy] = useState(false);
   const quiet = useQuietMotion();
   function next() {
-    const e: Record<string, string> = {};
-    if (!fullName.trim()) e.fullName = "Tell us what to call you.";
-    if (!course.trim()) e.course = "Add your course, such as B.Tech.";
-    if (!branch.trim()) e.branch = "Add your branch or field of study.";
+    const e = validateOnboarding({
+      full_name: fullName,
+      course,
+      branch,
+    });
     setErrors(e);
     if (Object.keys(e).length) return;
     setStep(1);

@@ -2,7 +2,13 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ChevronRight, Circle, GraduationCap } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronRight,
+  Circle,
+  GraduationCap,
+  RefreshCw,
+} from "lucide-react";
 import { useApp } from "@/components/providers/app-data";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { PageTransition } from "@/components/ui/motion";
@@ -13,10 +19,20 @@ import { Logo } from "./logo";
 import { WorkspaceSearch } from "./workspace-search";
 import { APP_NAV } from "@/lib/constants";
 import { initials } from "@/lib/utils";
+import { isOnboarded } from "@/lib/profile";
 
 /** Existing client guard complements the unchanged server middleware. */
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, profile, loading, error, refresh, mode } = useApp();
+  const {
+    user,
+    profile,
+    loading,
+    refreshing,
+    error,
+    syncWarning,
+    refresh,
+    mode,
+  } = useApp();
   const router = useRouter();
   const pathname = usePathname();
   useEffect(() => {
@@ -25,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       router.replace("/login");
       return;
     }
-    const onboarded = Boolean(profile?.onboarded);
+    const onboarded = isOnboarded(profile);
     if (!onboarded && pathname !== "/onboarding") router.replace("/onboarding");
     else if (onboarded && pathname === "/onboarding")
       router.replace("/dashboard");
@@ -38,7 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   if (loading || !user)
     return <LoadingState label="Preparing your workspace…" />;
-  if (!profile?.onboarded && pathname !== "/onboarding")
+  if (!isOnboarded(profile) && pathname !== "/onboarding")
     return <LoadingState label="Finishing your setup…" />;
   if (pathname === "/onboarding")
     return (
@@ -98,6 +114,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           tabIndex={-1}
           className="mx-auto min-h-[calc(100vh-72px)] w-full max-w-[1500px] px-5 pb-28 pt-7 outline-none sm:px-8 lg:pb-8 xl:px-9 xl:pt-8"
         >
+          {syncWarning && (
+            <div
+              role="alert"
+              className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3"
+            >
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-700" />
+              <p className="min-w-0 flex-1 text-xs leading-relaxed text-amber-900">
+                {syncWarning}
+              </p>
+              <button
+                onClick={() => void refresh()}
+                disabled={refreshing}
+                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-300 bg-surface px-3 py-1.5 text-[11px] font-semibold text-amber-800 transition-colors hover:bg-amber-100 disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={refreshing ? "h-3 w-3 animate-spin" : "h-3 w-3"}
+                />
+                {refreshing ? "Refreshing…" : "Retry"}
+              </button>
+            </div>
+          )}
           {error && (
             <div className="mb-5">
               <ErrorState message={error} onRetry={() => void refresh()} />

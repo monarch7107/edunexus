@@ -1,4 +1,5 @@
 import type { Repo } from "./types";
+import { RepoError } from "./errors";
 import type {
   AiRecommendation,
   AuthUser,
@@ -14,6 +15,7 @@ import type {
   TaskInput,
 } from "../types";
 import { nowIso, uid } from "../utils";
+import { isOnboarded, validateOnboarding } from "../profile";
 import { clearDemoCookie, setDemoCookie } from "../session-cookie";
 
 // ── Demo backend: localStorage. Zero-config, fully clickable, NOT for
@@ -39,11 +41,26 @@ interface DemoDb {
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
+  let raw: string | null;
   try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
+    raw = localStorage.getItem(key);
+  } catch (error) {
+    // Storage access itself failed — never disguise this as empty data.
+    throw new RepoError("backend", "Saved workspace data is unreadable.", {
+      cause: error,
+    });
+  }
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    // Corrupt JSON must surface as an explicit failure (retryable banner),
+    // not a silently emptied workspace.
+    throw new RepoError(
+      "backend",
+      "Saved workspace data is unreadable. Your work may still be safe — please retry.",
+      { cause: error },
+    );
   }
 }
 
@@ -83,7 +100,7 @@ export class DemoRepo implements Repo {
     const id = read<string | null>(SESSION_KEY, null);
     const users = read<DemoUser[]>(USERS_KEY, []);
     const user = users.find((u) => u.id === id);
-    if (!user) throw new Error("Not signed in");
+    if (!user) throw new RepoError("auth", "Not signed in");
     return { id: user.id, email: user.email };
   }
 
@@ -101,7 +118,10 @@ export class DemoRepo implements Repo {
     const clean = email.trim().toLowerCase();
     const users = read<DemoUser[]>(USERS_KEY, []);
     if (users.some((u) => u.email === clean)) {
-      throw new Error("An account with this email already exists.");
+      throw new RepoError(
+        "validation",
+        "An account with this email already exists.",
+      );
     }
     const user: DemoUser = {
       id: uid(),
@@ -120,7 +140,7 @@ export class DemoRepo implements Repo {
     const users = read<DemoUser[]>(USERS_KEY, []);
     const user = users.find((u) => u.email === clean);
     if (!user || user.passHash !== (await hashPassword(password))) {
-      throw new Error("Invalid email or password.");
+      throw new RepoError("auth", "Invalid email or password.");
     }
     write(SESSION_KEY, user.id);
     setDemoCookie();
@@ -141,10 +161,21 @@ export class DemoRepo implements Repo {
   }
 
   async getProfile(): Promise<Profile | null> {
-    return this.loadDb().profile;
+    const stored = this.loadDb().profile;
+    if (!stored) return null;
+    // Re-evaluate legacy/demo profiles without rewriting them: a partial
+    // profile (e.g. only full_name) must not count as onboarded.
+    return { ...stored, onboarded: isOnboarded(stored) };
   }
 
   async upsertProfile(input: ProfileInput): Promise<Profile> {
+    const fieldErrors = validateOnboarding(input);
+    if (Object.keys(fieldErrors).length > 0) {
+      throw new RepoError(
+        "validation",
+        "Name, course, and branch are required to complete onboarding.",
+      );
+    }
     const me = this.currentUser();
     const db = this.loadDb();
     const ts = nowIso();
@@ -193,7 +224,7 @@ export class DemoRepo implements Repo {
   ): Promise<Subject> {
     const db = this.loadDb();
     const s = db.subjects.find((x) => x.id === id);
-    if (!s) throw new Error("Subject not found");
+    if (!s) throw new RepoError("not-found", "Subject not found");
     if (input.name !== undefined) s.name = input.name.trim();
     if (input.code !== undefined) s.code = input.code.trim();
     if (input.color !== undefined) s.color = input.color;
@@ -248,7 +279,7 @@ export class DemoRepo implements Repo {
   async updateTask(id: string, input: Partial<TaskInput>): Promise<Task> {
     const db = this.loadDb();
     const t = db.tasks.find((x) => x.id === id);
-    if (!t) throw new Error("Task not found");
+    if (!t) throw new RepoError("not-found", "Task not found");
     if (input.title !== undefined) t.title = input.title.trim();
     if (input.description !== undefined) t.description = input.description.trim();
     if (input.task_type !== undefined) t.task_type = input.task_type;
@@ -263,7 +294,7 @@ export class DemoRepo implements Repo {
   async setTaskStatus(id: string, completed: boolean): Promise<Task> {
     const db = this.loadDb();
     const t = db.tasks.find((x) => x.id === id);
-    if (!t) throw new Error("Task not found");
+    if (!t) throw new RepoError("not-found", "Task not found");
     t.status = completed ? "completed" : "pending";
     t.completed_at = completed ? nowIso() : null;
     t.updated_at = nowIso();
@@ -308,7 +339,7 @@ export class DemoRepo implements Repo {
   ): Promise<StudySession> {
     const db = this.loadDb();
     const s = db.sessions.find((x) => x.id === id);
-    if (!s) throw new Error("Study session not found");
+    if (!s) throw new RepoError("not-found", "Study session not found");
     s.status = completed ? "completed" : "planned";
     s.completed_at = completed ? nowIso() : null;
     s.updated_at = nowIso();

@@ -27,6 +27,7 @@ import { ThemeOptions } from "@/components/theme/theme-picker";
 import { useTheme } from "@/components/providers/theme";
 import { useApp } from "@/components/providers/app-data";
 import { cn, initials } from "@/lib/utils";
+import { validateOnboarding, type OnboardingErrors } from "@/lib/profile";
 const SEMESTERS = Array.from({ length: 10 }, (_, i) => ({
   value: String(i + 1),
   label: `Semester ${i + 1}`,
@@ -49,7 +50,7 @@ export default function ProfilePage() {
     profile?.year_of_study ? String(profile.year_of_study) : "",
   );
   const [goals, setGoals] = useState(profile?.goals || "");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<OnboardingErrors>({});
   const [busy, setBusy] = useState(false);
   const [confirmOut, setConfirmOut] = useState(false);
   const dirty =
@@ -61,10 +62,11 @@ export default function ProfilePage() {
     goals !== (profile?.goals || "");
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const next: Record<string, string> = {};
-    if (!fullName.trim()) next.fullName = "Tell us what to call you.";
-    if (!course.trim()) next.course = "Add your course, such as B.Tech.";
-    if (!branch.trim()) next.branch = "Add your branch or field of study.";
+    const next = validateOnboarding({
+      full_name: fullName,
+      course,
+      branch,
+    });
     setErrors(next);
     if (Object.keys(next).length) return;
     setBusy(true);

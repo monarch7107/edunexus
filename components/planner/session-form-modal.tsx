@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { toDateInput } from "@/lib/utils";
+import { isValidCalendarDate } from "@/lib/dates";
 import { useApp } from "@/components/providers/app-data";
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120].map((m) => ({
@@ -49,6 +50,8 @@ export function SessionFormModal({
     if (!title.trim())
       next.title = "Give your session a title, e.g. ‘Revise OS deadlocks’.";
     if (!plannedDate) next.date = "Pick a planned date for your session.";
+    else if (!isValidCalendarDate(plannedDate))
+      next.date = "That date doesn’t look valid. Pick a real calendar date.";
     setErrors(next);
     if (Object.keys(next).length) return;
     setBusy(true);

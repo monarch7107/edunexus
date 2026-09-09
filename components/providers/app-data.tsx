@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { getRepo, isSupabaseConfigured } from "@/lib/repo";
@@ -24,8 +25,22 @@ import type {
   Task,
   TaskInput,
 } from "@/lib/types";
+import {
+  createRefreshCoordinator,
+  refreshFailureSummary,
+  settleRefresh,
+  type RefreshCoordinator,
+} from "@/lib/workspace-refresh";
 import { useToast } from "./toast";
 import { friendlyError } from "@/lib/errors";
+
+/** Outcome of one workspace refresh round. */
+export interface RefreshOutcome {
+  /** True when a newer round superseded this one — its results were dropped. */
+  stale: boolean;
+  /** Dataset keys that failed to load (`[]` when everything is current). */
+  failed: string[];
+}
 
 interface AppDataValue {
   repo: Repo;
@@ -38,8 +53,17 @@ interface AppDataValue {
   resources: Resource[];
   recommendations: AiRecommendation[];
   loading: boolean;
+  /** True while a non-initial refresh round is in flight. */
+  refreshing: boolean;
   error: string | null;
-  refresh: () => Promise<void>;
+  /** Per-dataset refresh failures, keyed by dataset (`{}`). */
+  datasetErrors: Record<string, string>;
+  /**
+   * Set when a write succeeded but the follow-up refresh failed: the UI
+   * must show this explicitly instead of pretending everything is current.
+   */
+  syncWarning: string | null;
+  refresh: () => Promise<RefreshOutcome>;
   // auth
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -66,6 +90,17 @@ interface AppDataValue {
 
 const AppDataContext = createContext<AppDataValue | null>(null);
 
+function emptyWorkspace() {
+  return {
+    profile: null as Profile | null,
+    subjects: [] as Subject[],
+    tasks: [] as Task[],
+    sessions: [] as StudySession[],
+    resources: [] as Resource[],
+    recommendations: [] as AiRecommendation[],
+  };
+}
+
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const repo = getRepo();
   const toast = useToast();
@@ -80,46 +115,114 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     [],
   );
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [datasetErrors, setDatasetErrors] = useState<Record<string, string>>({});
+  const [syncWarning, setSyncWarning] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const coordinatorRef = useRef<RefreshCoordinator | null>(null);
+  if (!coordinatorRef.current) {
+    coordinatorRef.current = createRefreshCoordinator();
+  }
+  const prevUserIdRef = useRef<string | null>(null);
+  const firstLoadRef = useRef(true);
+
+  const clearWorkspace = useCallback(() => {
+    const empty = emptyWorkspace();
+    setProfile(empty.profile);
+    setSubjects(empty.subjects);
+    setTasks(empty.tasks);
+    setSessions(empty.sessions);
+    setResources(empty.resources);
+    setRecommendations(empty.recommendations);
+  }, []);
+
+  const refresh = useCallback(async (): Promise<RefreshOutcome> => {
+    const coordinator = coordinatorRef.current as RefreshCoordinator;
+    const token = coordinator.begin();
+    setRefreshing(true);
     try {
-      const u = await repo.getUser();
-      setUser(u);
-      if (!u) {
-        setProfile(null);
-        setSubjects([]);
-        setTasks([]);
-        setSessions([]);
-        setResources([]);
-        setRecommendations([]);
-        setLoading(false);
-        setError(null);
-        return;
+      let current: AuthUser | null;
+      try {
+        current = await repo.getUser();
+      } catch (e) {
+        // Session read failed (expired token, network, …): keep the existing
+        // workspace data rather than wiping it, and say so explicitly.
+        if (coordinator.isStale(token)) return { stale: true, failed: [] };
+        setError(friendlyError(e));
+        return { stale: false, failed: ["session"] };
       }
-      const [p, s, t, se, r, rec] = await Promise.all([
-        repo.getProfile(),
-        repo.listSubjects(),
-        repo.listTasks(),
-        repo.listSessions(),
-        repo.listResources(),
-        repo.listRecommendations(),
-      ]);
-      setProfile(p);
-      setSubjects(s);
-      setTasks(t);
-      setSessions(se);
-      setResources(r);
-      setRecommendations(rec);
-      setError(null);
-    } catch {
-      setError(
-        "We couldn’t refresh your workspace. Your saved work is safe. Check your connection and try again.",
-      );
+      if (coordinator.isStale(token)) return { stale: true, failed: [] };
+
+      if (!current) {
+        prevUserIdRef.current = null;
+        setUser(null);
+        clearWorkspace();
+        setError(null);
+        setDatasetErrors({});
+        setSyncWarning(null);
+        return { stale: false, failed: [] };
+      }
+
+      if (
+        prevUserIdRef.current !== null &&
+        prevUserIdRef.current !== current.id
+      ) {
+        // Account changed: drop the previous user's data immediately so it
+        // can never leak into the new session, even briefly.
+        clearWorkspace();
+        setDatasetErrors({});
+        setSyncWarning(null);
+      }
+      prevUserIdRef.current = current.id;
+      setUser(current);
+
+      const settled = await settleRefresh(coordinator, token, {
+        profile: () => repo.getProfile(),
+        subjects: () => repo.listSubjects(),
+        tasks: () => repo.listTasks(),
+        sessions: () => repo.listSessions(),
+        resources: () => repo.listResources(),
+        recommendations: () => repo.listRecommendations(),
+      });
+      // Superseded rounds are discarded whole: older responses must never
+      // overwrite newer state.
+      if (settled.stale) return { stale: true, failed: [] };
+
+      // Each successful dataset updates independently — one failed read no
+      // longer blocks the rest.
+      const { values, failed } = settled;
+      if (!failed.includes("profile")) setProfile(values.profile ?? null);
+      if (!failed.includes("subjects")) setSubjects(values.subjects ?? []);
+      if (!failed.includes("tasks")) setTasks(values.tasks ?? []);
+      if (!failed.includes("sessions")) setSessions(values.sessions ?? []);
+      if (!failed.includes("resources")) setResources(values.resources ?? []);
+      if (!failed.includes("recommendations")) {
+        setRecommendations(values.recommendations ?? []);
+      }
+
+      if (failed.length > 0) {
+        const summary = refreshFailureSummary(failed);
+        setError(summary);
+        const detail: Record<string, string> = {};
+        for (const key of failed) detail[key] = summary;
+        setDatasetErrors(detail);
+      } else {
+        setError(null);
+        setDatasetErrors({});
+        setSyncWarning(null);
+      }
+      return { stale: false, failed };
     } finally {
-      setLoading(false);
+      if (!coordinator.isStale(token)) {
+        setRefreshing(false);
+        if (firstLoadRef.current) {
+          firstLoadRef.current = false;
+          setLoading(false);
+        }
+      }
     }
-  }, [repo]);
+  }, [repo, clearWorkspace]);
 
   useEffect(() => {
     refresh();
@@ -133,13 +236,29 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     async (fn: () => Promise<unknown>, okMessage?: string) => {
       try {
         await fn();
-        await refresh();
-        if (okMessage) toast.success(okMessage);
       } catch (e) {
-        const message = friendlyError(e);
-        toast.error(message);
+        // The write itself failed: nothing was saved, so surface the error
+        // and never claim success. No retry here — retrying writes could
+        // create duplicates.
+        toast.error(friendlyError(e));
         throw e;
       }
+      // The write succeeded. A failed follow-up refresh must neither look
+      // like a failed write nor silently pretend everything is current.
+      const outcome = await refresh();
+      if (outcome.stale) {
+        // A newer refresh round is already in flight and owns warning state.
+        if (okMessage) toast.success(okMessage);
+        return;
+      }
+      if (outcome.failed.length > 0) {
+        const warning =
+          "Saved, but some workspace data couldn’t be refreshed just now. Retry to bring everything current — your change is safe.";
+        setSyncWarning(warning);
+        toast.warning(warning);
+        return;
+      }
+      if (okMessage) toast.success(okMessage);
     },
     [refresh, toast],
   );
@@ -156,7 +275,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       resources,
       recommendations,
       loading,
+      refreshing,
       error,
+      datasetErrors,
+      syncWarning,
       refresh,
       signUp: (email, password) =>
         run(async () => {
@@ -239,7 +361,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       resources,
       recommendations,
       loading,
+      refreshing,
       error,
+      datasetErrors,
+      syncWarning,
       refresh,
       run,
     ],

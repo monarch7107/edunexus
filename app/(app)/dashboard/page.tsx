@@ -30,6 +30,7 @@ import { SubjectFormModal } from "@/components/academics/subject-form-modal";
 import { ResourceFormModal } from "@/components/learning/resource-form-modal";
 import { StudySessionCard } from "@/components/planner/study-session-card";
 import { AiRecommendationCard } from "@/components/dashboard/ai-recommendation-card";
+import { DemoSeedCard, DemoBanner } from "@/components/demo/demo-seed-card";
 import { StudyChart } from "@/components/insights/study-chart";
 import { WeekStrip, weekStart } from "@/components/planner/week-strip";
 import { useApp } from "@/components/providers/app-data";
@@ -93,8 +94,18 @@ export default function DashboardPage() {
   };
   if (loading) return <LoadingState label="Loading your academic overview…" />;
   const firstName = profile?.full_name?.split(" ")[0] || "there";
+  const isEmpty =
+    subjects.length === 0 && tasks.length === 0 && sessions.length === 0;
   return (
     <>
+      <DemoBanner />
+      {isEmpty && (
+        <Reveal>
+          <div className="mb-6">
+            <DemoSeedCard />
+          </div>
+        </Reveal>
+      )}
       <PageHeader
         eyebrow={new Date().toLocaleDateString(undefined, {
           weekday: "long",

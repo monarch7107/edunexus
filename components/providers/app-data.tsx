@@ -33,6 +33,7 @@ import {
 } from "@/lib/workspace-refresh";
 import { useToast } from "./toast";
 import { friendlyError } from "@/lib/errors";
+import { isolateAccount } from "@/lib/offline/queue";
 
 /** Outcome of one workspace refresh round. */
 export interface RefreshOutcome {
@@ -81,6 +82,7 @@ interface AppDataValue {
   deleteTask: (id: string) => Promise<void>;
   // sessions
   createSession: (input: SessionInput) => Promise<void>;
+  updateSession: (id: string, input: Partial<SessionInput>) => Promise<void>;
   setSessionStatus: (id: string, completed: boolean) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
   // resources
@@ -170,6 +172,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       ) {
         // Account changed: drop the previous user's data immediately so it
         // can never leak into the new session, even briefly.
+        isolateAccount(prevUserIdRef.current, current.id);
         clearWorkspace();
         setDatasetErrors({});
         setSyncWarning(null);
@@ -290,6 +293,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         }, "Welcome back!"),
       signOut: () =>
         run(async () => {
+          isolateAccount(prevUserIdRef.current, null);
           await repo.signOut();
         }, "Signed out."),
       saveProfile: (input) =>
@@ -331,6 +335,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         run(async () => {
           await repo.createSession(input);
         }, "Study session planned."),
+      updateSession: (id, input) =>
+        run(async () => {
+          await repo.updateSession(id, input);
+        }, "Study session updated."),
       setSessionStatus: (id, completed) =>
         run(
           async () => {

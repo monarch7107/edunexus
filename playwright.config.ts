@@ -19,6 +19,12 @@ export default defineConfig({
       args: ["--no-sandbox", "--disable-dev-shm-usage"],
     },
   },
+  webServer: {
+    command: "npm run dev",
+    url: process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000",
+    reuseExistingServer: true,
+    timeout: 120000,
+  },
   projects: [
     {
       name: "chromium",

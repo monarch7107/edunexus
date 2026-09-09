@@ -22,6 +22,7 @@ import { AnimatedList, Reveal } from "@/components/ui/motion";
 import { StatCard } from "@/components/ui/stat-card";
 import { ProgressRing } from "@/components/ui/progress-bar";
 import { SessionFormModal } from "@/components/planner/session-form-modal";
+import { ScheduleCopilot } from "@/components/ai/copilot";
 import { StudySessionCard } from "@/components/planner/study-session-card";
 import { WeekStrip, weekStart } from "@/components/planner/week-strip";
 import { useApp } from "@/components/providers/app-data";
@@ -269,6 +270,9 @@ export default function PlannerPage() {
           </Reveal>
         </div>
         <div className="min-w-0 space-y-5">
+          <Reveal delay={0.06}>
+            <ScheduleCopilot />
+          </Reveal>
           <Reveal delay={0.08}>
             <Card className="!border-brand-200 !bg-brand-50/70">
               <div className="mb-5 flex items-center gap-2">

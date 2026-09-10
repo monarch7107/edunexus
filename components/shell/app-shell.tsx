@@ -18,7 +18,7 @@ import { MobileNavigation } from "./mobile-navigation";
 import { Logo } from "./logo";
 import { WorkspaceSearch } from "./workspace-search";
 import { ConnectivityBar } from "./connectivity";
-import { APP_NAV } from "@/lib/constants";
+import { APP_NAV, INTEL_NAV } from "@/lib/constants";
 import { initials } from "@/lib/utils";
 import { isOnboarded } from "@/lib/profile";
 
@@ -72,7 +72,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
     );
   const current =
-    APP_NAV.find((item) => item.href === pathname)?.label || "Workspace";
+    APP_NAV.find((item) => item.href === pathname)?.label ||
+    INTEL_NAV.find((item) => item.href === pathname)?.label ||
+    "Workspace";
   return (
     <div className="min-h-screen bg-canvas">
       <a

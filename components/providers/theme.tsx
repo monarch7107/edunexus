@@ -29,10 +29,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    updateTheme((root.dataset.preference as Theme) || "system");
+    const media = matchMedia("(prefers-color-scheme: dark)");
+    const preference = (root.dataset.preference as Theme) || "system";
+    // The pre-paint script in the root layout normally sets these before
+    // first paint; ensure they exist even if that script was blocked.
+    if (!root.dataset.theme) {
+      root.dataset.preference = preference;
+      root.dataset.theme =
+        preference === "system" ? (media.matches ? "dark" : "light") : preference;
+    }
+    if (!root.dataset.accent) root.dataset.accent = "forest";
+    updateTheme(preference);
     updateAccent((root.dataset.accent as Accent) || "forest");
     updateMotion(root.dataset.reduceMotion === "true");
-    const media = matchMedia("(prefers-color-scheme: dark)");
     const systemChange = () => {
       if (!root.dataset.preference || root.dataset.preference === "system") {
         root.dataset.theme = media.matches ? "dark" : "light";

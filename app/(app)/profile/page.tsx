@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowUpRight,
@@ -28,6 +28,7 @@ import { useTheme } from "@/components/providers/theme";
 import { useApp } from "@/components/providers/app-data";
 import { cn, initials } from "@/lib/utils";
 import { validateOnboarding, type OnboardingErrors } from "@/lib/profile";
+import { clearAgentHistory, listAgentRuns } from "@/lib/ai/activity-store";
 const SEMESTERS = Array.from({ length: 10 }, (_, i) => ({
   value: String(i + 1),
   label: `Semester ${i + 1}`,
@@ -147,6 +148,11 @@ export default function ProfilePage() {
                   href: "#workspace",
                   label: "Workspace & data",
                   Icon: Database,
+                },
+                {
+                  href: "#ai-controls",
+                  label: "AI & privacy",
+                  Icon: ShieldCheck,
                 },
               ].map(({ href, label, Icon }) => (
                 <a
@@ -329,6 +335,9 @@ export default function ProfilePage() {
             </Card>
           </Reveal>
           <Reveal>
+            <AiControlsCard />
+          </Reveal>
+          <Reveal>
             <Card id="workspace">
               <CardHeader
                 title="Your workspace & your data"
@@ -391,6 +400,74 @@ export default function ProfilePage() {
         }}
       />
     </>
+  );
+}
+function AiControlsCard() {
+  const { user } = useApp();
+  const [cleared, setCleared] = useState(false);
+  const [runCount, setRunCount] = useState(0);
+  useEffect(() => {
+    setRunCount(listAgentRuns(user?.id).length);
+    setCleared(false);
+  }, [user?.id]);
+  return (
+    <Card id="ai-controls">
+      <CardHeader
+        title="AI & privacy"
+        description="How EduNexus uses AI on your data — and the controls you keep."
+        icon={<ShieldCheck className="h-4 w-4 text-brand-600" />}
+      />
+      <ul className="space-y-3 text-xs leading-relaxed text-muted">
+        <li className="flex gap-2.5">
+          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-600" />
+          <span>
+            <span className="font-semibold text-ink">Your data stays yours. </span>
+            The Planning Agent reads only your own workspace, enforced by your
+            server session and row-level security — never by the model.
+          </span>
+        </li>
+        <li className="flex gap-2.5">
+          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-600" />
+          <span>
+            <span className="font-semibold text-ink">You approve every change. </span>
+            AI proposes a change set; nothing is written until you approve it,
+            and edited proposals need a fresh review.
+          </span>
+        </li>
+        <li className="flex gap-2.5">
+          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-600" />
+          <span>
+            <span className="font-semibold text-ink">AI planning needs the internet. </span>
+            Offline, your workspace keeps working locally but planning is
+            honestly unavailable — it never pretends otherwise.
+          </span>
+        </li>
+      </ul>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-5">
+        <div>
+          <p className="text-xs font-semibold">
+            On-device AI history{runCount ? ` (${runCount} run${runCount === 1 ? "" : "s"})` : ""}
+          </p>
+          <p className="mt-1 text-[11px] text-muted">
+            {cleared
+              ? "History cleared on this device."
+              : "Proposals and verification outcomes recorded in this browser."}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!runCount}
+          onClick={() => {
+            clearAgentHistory(user?.id);
+            setRunCount(0);
+            setCleared(true);
+          }}
+        >
+          Clear AI history on this device
+        </Button>
+      </div>
+    </Card>
   );
 }
 function FileStorageNote() {

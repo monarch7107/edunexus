@@ -1,0 +1,30 @@
+"use client";
+
+import { Badge } from "@/components/ui/badge";
+import type { AgentRunStatus } from "@/lib/ai/types";
+import { cn } from "@/lib/utils";
+
+const META: Record<AgentRunStatus, { label: string; tone: string }> = {
+  queued: { label: "Queued", tone: "" },
+  running: { label: "Running", tone: "border-brand-200 bg-brand-50 text-brand-700" },
+  waiting_approval: {
+    label: "Awaiting approval",
+    tone: "border-amber-200 bg-amber-50 text-amber-800",
+  },
+  executing: { label: "Executing", tone: "border-brand-200 bg-brand-50 text-brand-700" },
+  completed: {
+    label: "Verified",
+    tone: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  },
+  failed: { label: "Needs attention", tone: "border-red-200 bg-red-50 text-red-700" },
+  cancelled: { label: "Rejected", tone: "" },
+};
+
+export function RunStatusBadge({ status }: { status: AgentRunStatus }) {
+  const meta = META[status] ?? META.queued;
+  return (
+    <Badge variant="outline" className={cn(meta.tone)}>
+      {meta.label}
+    </Badge>
+  );
+}

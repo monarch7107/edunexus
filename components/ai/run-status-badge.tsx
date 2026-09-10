@@ -6,12 +6,12 @@ import { cn } from "@/lib/utils";
 
 const META: Record<AgentRunStatus, { label: string; tone: string }> = {
   queued: { label: "Queued", tone: "" },
-  running: { label: "Running", tone: "border-brand-200 bg-brand-50 text-brand-700" },
+  running: { label: "Running", tone: "border-ai-line bg-ai-soft text-ai" },
   waiting_approval: {
     label: "Awaiting approval",
     tone: "border-amber-200 bg-amber-50 text-amber-800",
   },
-  executing: { label: "Executing", tone: "border-brand-200 bg-brand-50 text-brand-700" },
+  executing: { label: "Executing", tone: "border-ai-line bg-ai-soft text-ai" },
   completed: {
     label: "Verified",
     tone: "border-emerald-200 bg-emerald-50 text-emerald-700",

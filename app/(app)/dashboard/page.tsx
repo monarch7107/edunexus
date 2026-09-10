@@ -139,7 +139,7 @@ export default function DashboardPage() {
 
       <section
         aria-labelledby="dashboard-title"
-        className="flex flex-col gap-5 rounded-2xl border border-brand-800 bg-brand-900 px-5 py-6 text-white shadow-xl shadow-brand-900/10 dark:border-white/10 dark:bg-[#0f1b33] sm:px-7 sm:py-7 lg:flex-row lg:items-end lg:justify-between"
+        className="flex flex-col gap-5 rounded-2xl border border-hero-line bg-hero px-5 py-6 text-white shadow-xl sm:px-7 sm:py-7 lg:flex-row lg:items-end lg:justify-between"
       >
         <div className="max-w-2xl">
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-medium text-white">
@@ -161,7 +161,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-gold text-[#12214d]">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-gold text-on-gold">
             <TrendingUp className="size-5" aria-hidden />
           </div>
           <div>

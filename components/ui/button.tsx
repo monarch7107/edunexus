@@ -3,7 +3,14 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline";
+type Variant =
+  | "primary"
+  | "secondary"
+  | "ghost"
+  | "danger"
+  | "outline"
+  | "success"
+  | "ai";
 type Size = "sm" | "md" | "lg" | "icon";
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -20,6 +27,9 @@ const variants: Record<Variant, string> = {
   danger: "border border-transparent bg-red-600 text-surface hover:opacity-90",
   outline:
     "border border-slate-300 bg-surface text-slate-700 shadow-sm hover:border-brand-300 hover:bg-slate-50",
+  success:
+    "border border-transparent bg-success-strong text-on-success shadow-sm hover:opacity-90",
+  ai: "border border-transparent bg-ai text-on-ai shadow-sm hover:opacity-90",
 };
 const sizes: Record<Size, string> = {
   sm: "min-h-9 px-3 text-xs gap-1.5",

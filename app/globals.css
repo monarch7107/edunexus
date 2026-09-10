@@ -1,148 +1,9 @@
+@import "./themes.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    color-scheme: light;
-    --canvas: 244 246 250;
-    --surface: 255 255 253;
-    --ink: 15 31 56;
-    --muted: 91 105 128;
-    --line: 222 228 238;
-    --shadow: 15 31 56;
-    --slate-50: 246 248 244;
-    --slate-100: 239 243 237;
-    --slate-200: 226 232 222;
-    --slate-300: 205 216 199;
-    --slate-400: 107 122 111;
-    --slate-500: 91 108 97;
-    --slate-600: 80 98 86;
-    --slate-700: 58 78 65;
-    --slate-800: 39 59 46;
-    --slate-900: 24 44 32;
-    --slate-950: 17 31 23;
-    --brand-50: 237 242 255;
-    --brand-100: 220 228 255;
-    --brand-200: 188 201 250;
-    --brand-300: 145 163 238;
-    --brand-400: 98 122 220;
-    --brand-500: 55 87 190;
-    --brand-600: 37 67 158;
-    --brand-700: 29 52 126;
-    --brand-800: 24 43 103;
-    --brand-900: 18 33 77;
-    --on-accent: 255 255 255;
-    --danger: 179 64 58;
-    --danger-soft: 254 241 237;
-    --danger-line: 240 204 196;
-    --warning: 143 99 27;
-    --warning-soft: 251 245 226;
-    --warning-line: 232 217 176;
-    --success: 38 120 79;
-    --success-soft: 233 245 235;
-    --success-line: 192 219 198;
-    --info: 63 108 152;
-    --info-soft: 237 243 250;
-    --info-line: 202 219 234;
-    --gold: 184 148 78;
-    --ivory: 250 247 240;
-  }
-  :root[data-theme="dark"] {
-    color-scheme: dark;
-    --canvas: 16 22 20;
-    --surface: 23 31 27;
-    --ink: 231 238 232;
-    --muted: 156 171 161;
-    --line: 47 60 52;
-    --shadow: 0 0 0;
-    --slate-50: 26 35 30;
-    --slate-100: 31 43 36;
-    --slate-200: 47 60 52;
-    --slate-300: 65 80 70;
-    --slate-400: 129 148 137;
-    --slate-500: 155 174 162;
-    --slate-600: 177 194 183;
-    --slate-700: 199 212 202;
-    --slate-800: 217 229 219;
-    --slate-900: 237 244 238;
-    --slate-950: 246 250 247;
-    --brand-50: 26 44 34;
-    --brand-100: 34 62 44;
-    --brand-200: 49 88 61;
-    --brand-300: 77 116 88;
-    --brand-400: 106 160 122;
-    --brand-500: 111 177 133;
-    --brand-600: 151 203 164;
-    --brand-700: 177 221 183;
-    --brand-800: 200 234 202;
-    --brand-900: 221 244 221;
-    --on-accent: 20 43 28;
-    --danger: 243 151 136;
-    --danger-soft: 56 33 29;
-    --danger-line: 92 52 44;
-    --warning: 224 191 119;
-    --warning-soft: 49 43 26;
-    --warning-line: 86 74 43;
-    --success: 145 211 170;
-    --success-soft: 30 51 38;
-    --success-line: 49 85 61;
-    --info: 148 191 232;
-    --info-soft: 29 43 57;
-    --info-line: 50 73 96;
-    --gold: 212 180 110;
-    --ivory: 30 36 32;
-  }
-  :root[data-accent="indigo"] {
-    --brand-50: 244 243 252;
-    --brand-100: 235 231 249;
-    --brand-200: 212 204 239;
-    --brand-300: 182 169 225;
-    --brand-400: 153 138 211;
-    --brand-500: 119 101 186;
-    --brand-600: 102 80 166;
-    --brand-700: 84 65 145;
-    --brand-800: 68 53 121;
-    --brand-900: 53 41 97;
-  }
-  :root[data-theme="dark"][data-accent="indigo"] {
-    --brand-50: 34 30 47;
-    --brand-100: 49 41 68;
-    --brand-200: 69 58 95;
-    --brand-300: 98 83 129;
-    --brand-400: 130 111 166;
-    --brand-500: 159 141 199;
-    --brand-600: 192 173 231;
-    --brand-700: 212 195 245;
-    --brand-800: 226 213 252;
-    --brand-900: 238 229 255;
-    --on-accent: 38 25 60;
-  }
-  :root[data-accent="clay"] {
-    --brand-50: 251 243 237;
-    --brand-100: 247 229 216;
-    --brand-200: 233 202 180;
-    --brand-300: 215 169 142;
-    --brand-400: 191 132 101;
-    --brand-500: 170 103 74;
-    --brand-600: 149 80 55;
-    --brand-700: 126 65 45;
-    --brand-800: 99 51 37;
-    --brand-900: 77 40 30;
-  }
-  :root[data-theme="dark"][data-accent="clay"] {
-    --brand-50: 47 33 28;
-    --brand-100: 65 45 35;
-    --brand-200: 95 66 51;
-    --brand-300: 130 89 68;
-    --brand-400: 169 120 94;
-    --brand-500: 194 140 111;
-    --brand-600: 222 171 140;
-    --brand-700: 235 194 166;
-    --brand-800: 245 215 194;
-    --brand-900: 253 232 218;
-    --on-accent: 51 30 20;
-  }
   * {
     @apply border-line;
   }
@@ -176,7 +37,7 @@
     touch-action: manipulation;
   }
   *:focus-visible {
-    outline: 2px solid rgb(var(--brand-600));
+    outline: 2px solid rgb(var(--focus));
     outline-offset: 4px;
   }
   button:disabled {
@@ -316,6 +177,24 @@
       transparent 0.7px
     );
     background-size: 18px 18px;
+  }
+  /* Theme-aware gradients. Decorative only — never the sole carrier of meaning. */
+  .gradient-brand {
+    background-image: linear-gradient(
+      135deg,
+      rgb(var(--gradient-from)),
+      rgb(var(--gradient-to))
+    );
+  }
+  .gradient-text {
+    background-image: linear-gradient(
+      100deg,
+      rgb(var(--gradient-from)),
+      rgb(var(--gradient-to))
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
 

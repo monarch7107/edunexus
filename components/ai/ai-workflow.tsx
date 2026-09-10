@@ -18,7 +18,7 @@ export function AICommandBox({
   actionLabel?: string;
 }) {
   return (
-    <Card className="border-brand-800 bg-brand-900 text-white shadow-xl shadow-brand-900/10 dark:border-white/10 dark:bg-[#0f1b33]">
+    <Card className="border-hero-line bg-hero text-white shadow-xl">
       <CardContent className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div>
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.16em] text-white/70">
@@ -39,7 +39,7 @@ export function AICommandBox({
         <ButtonLink
           href="/ai"
           variant="secondary"
-          className="shrink-0 border border-white/20 !bg-white !text-[#12214d] hover:!bg-white/90"
+          className="shrink-0 border border-white/20 !bg-white !text-hero hover:!bg-white/90"
         >
           {actionLabel} <ArrowRight className="size-4" aria-hidden />
         </ButtonLink>

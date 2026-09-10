@@ -245,12 +245,12 @@ test("student journey: registration, onboarding, CRUD, recommendations, settings
   ).toBeVisible();
   await page.getByRole("button", { name: "Dark", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await page.getByRole("button", { name: "Iris", exact: true }).click();
-  await expect(page.locator("html")).toHaveAttribute("data-accent", "indigo");
+  await page.getByRole("button", { name: "Aurora Scholar" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-palette", "aurora");
   await page.getByRole("switch", { name: "Reduce workspace motion" }).click();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator("html")).toHaveAttribute("data-accent", "indigo");
+  await expect(page.locator("html")).toHaveAttribute("data-palette", "aurora");
   await expect(
     page.getByRole("switch", { name: "Reduce workspace motion" }),
   ).toHaveAttribute("aria-checked", "true");
@@ -393,10 +393,10 @@ test("auth validation, guards, theme persistence and error feedback", async ({
   await expect(page).toHaveURL(/login/);
   await page.getByRole("button", { name: "Customize appearance" }).click();
   await page.getByRole("button", { name: "Dark", exact: true }).click();
-  await page.getByRole("button", { name: "Terracotta", exact: true }).click();
+  await page.getByRole("button", { name: "Royal Gold + Black" }).click();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator("html")).toHaveAttribute("data-accent", "clay");
+  await expect(page.locator("html")).toHaveAttribute("data-palette", "royal");
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });

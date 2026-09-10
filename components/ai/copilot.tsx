@@ -192,14 +192,14 @@ export function ScheduleCopilot({
   }
 
   return (
-    <Card className="relative overflow-hidden !border-[rgb(var(--gold)/0.28)] !bg-brand-50/50">
+    <Card className="relative overflow-hidden !border-[rgb(var(--gold)/0.28)] !bg-ai-soft/50">
       <span
         aria-hidden
         className="absolute inset-x-0 top-0 h-0.5"
         style={{ background: "rgb(var(--gold))" }}
       />
       <div className="mb-3 flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-brand-600" />
+        <Sparkles className="h-4 w-4 text-ai" />
         <h2 className="section-title">Optimize my week</h2>
       </div>
       <p className="mb-3 text-[11px] leading-relaxed text-muted">

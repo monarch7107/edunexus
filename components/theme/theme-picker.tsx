@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, Monitor, Moon, Sun, Palette } from "lucide-react";
+import { Check, Monitor, Moon, Sun, Palette as PaletteIcon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   useTheme,
   type Theme,
-  type Accent,
+  type Palette,
 } from "@/components/providers/theme";
+import { PALETTES } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const THEMES = [
@@ -14,14 +15,23 @@ const THEMES = [
   { value: "dark", label: "Dark", Icon: Moon },
   { value: "system", label: "System", Icon: Monitor },
 ] as const;
-export const ACCENTS = [
-  { value: "forest", label: "Forest", color: "#386e51" },
-  { value: "indigo", label: "Iris", color: "#8065b5" },
-  { value: "clay", label: "Terracotta", color: "#b67858" },
-] as const;
+
+function PaletteSwatches({ colors }: { colors: readonly [string, string, string] }) {
+  return (
+    <span aria-hidden className="flex -space-x-1.5">
+      {colors.map((color) => (
+        <span
+          key={color}
+          className="size-5 rounded-full border-2 border-surface"
+          style={{ backgroundColor: color }}
+        />
+      ))}
+    </span>
+  );
+}
 
 export function ThemeOptions({ detailed = false }: { detailed?: boolean }) {
-  const { theme, accent, setTheme, setAccent } = useTheme();
+  const { theme, palette, setTheme, setPalette } = useTheme();
   return (
     <div className="space-y-5">
       <fieldset>
@@ -39,35 +49,11 @@ export function ThemeOptions({ detailed = false }: { detailed?: boolean }) {
                   : "border-line text-muted",
               )}
             >
-              {detailed && (
-                <span
-                  aria-hidden
-                  className={cn(
-                    "mb-3 flex h-16 gap-1.5 overflow-hidden rounded-md border p-1.5",
-                    value === "dark"
-                      ? "border-[#34443a] bg-[#1b2520]"
-                      : value === "light"
-                        ? "border-[#d7dfd3] bg-[#fbfcf9]"
-                        : "border-[#b3c0b0] bg-[linear-gradient(90deg,#fbfcf9_50%,#1b2520_50%)]",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "w-1/4 rounded-sm",
-                      value === "dark" ? "bg-[#354a3b]" : "bg-[#dbe7d5]",
-                    )}
-                  />
-                  <span className="flex flex-1 flex-col gap-1.5 py-1">
-                    <span className="h-2 w-3/4 rounded-sm bg-[#9aae91]/60" />
-                    <span className="flex-1 rounded-sm bg-[#9aae91]/20" />
-                  </span>
-                </span>
-              )}
               <span className="flex items-center justify-center gap-1.5">
                 <Icon className="h-3.5 w-3.5" />
                 {label}
               </span>
-              {theme === value && detailed && (
+              {theme === value && (
                 <Check className="absolute right-2 top-2 h-3 w-3 text-brand-600" />
               )}
             </button>
@@ -75,31 +61,57 @@ export function ThemeOptions({ detailed = false }: { detailed?: boolean }) {
         </div>
       </fieldset>
       <fieldset>
-        <legend className="mb-3 text-xs font-semibold">Accent color</legend>
-        <div className="flex flex-wrap gap-2">
-          {ACCENTS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setAccent(option.value as Accent)}
-              aria-pressed={accent === option.value}
-              className={cn(
-                "flex items-center gap-2 rounded-lg border px-3 py-2 text-[11px] font-medium transition-colors",
-                accent === option.value
-                  ? "border-brand-400 bg-brand-50 text-brand-700"
-                  : "border-line text-muted hover:bg-slate-50",
-              )}
-            >
-              <span
-                className="flex h-4 w-4 items-center justify-center rounded-full"
-                style={{ backgroundColor: option.color }}
-              >
-                {accent === option.value && (
-                  <Check className="h-2.5 w-2.5 text-white" />
+        <legend className="mb-3 text-xs font-semibold">Theme</legend>
+        <div className={cn("grid gap-2", detailed ? "sm:grid-cols-2" : "grid-cols-1")}>
+          {PALETTES.map((option) => {
+            const selected = palette === option.value;
+            return (
+              <button
+                key={option.value}
+                onClick={() => setPalette(option.value as Palette)}
+                aria-pressed={selected}
+                className={cn(
+                  "relative flex items-start gap-3 rounded-xl border p-3 text-left transition-all hover:border-brand-400",
+                  selected
+                    ? "border-brand-500 bg-brand-50"
+                    : "border-line bg-surface",
                 )}
-              </span>
-              {option.label}
-            </button>
-          ))}
+              >
+                <PaletteSwatches colors={option.swatches} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span
+                      className={cn(
+                        "text-xs font-semibold",
+                        selected ? "text-brand-800" : "text-ink",
+                      )}
+                    >
+                      {option.label}
+                    </span>
+                    {option.recommended && (
+                      <span className="rounded-full bg-brand-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-on-accent">
+                        Default
+                      </span>
+                    )}
+                  </span>
+                  <span className="mt-0.5 block text-[10px] font-medium uppercase tracking-wide text-muted">
+                    {option.tagline}
+                  </span>
+                  {detailed && (
+                    <span className="mt-1 block text-[11px] leading-relaxed text-muted">
+                      {option.description}
+                    </span>
+                  )}
+                </span>
+                {selected && (
+                  <Check
+                    aria-hidden
+                    className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-brand-600"
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       </fieldset>
     </div>
@@ -145,7 +157,7 @@ export function ThemePicker() {
         aria-expanded={open}
         aria-controls={id}
       >
-        <Palette className="h-[18px] w-[18px]" />
+        <PaletteIcon className="h-[18px] w-[18px]" />
       </button>
       <AnimatePresence>
         {open && (
@@ -154,7 +166,7 @@ export function ThemePicker() {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="fixed right-4 top-[72px] z-50 w-[min(320px,calc(100vw-32px))] rounded-xl border border-line bg-surface p-5 shadow-popover sm:absolute sm:right-0 sm:top-12"
+            className="fixed right-4 top-[72px] z-50 max-h-[calc(100dvh-96px)] w-[min(340px,calc(100vw-32px))] overflow-y-auto rounded-xl border border-line bg-surface p-5 shadow-popover sm:absolute sm:right-0 sm:top-12"
           >
             <ThemeOptions />
             <p className="mt-4 border-t border-line pt-3 text-[10px] text-muted">

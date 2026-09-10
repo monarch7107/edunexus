@@ -3,11 +3,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Activity,
+  AlertTriangle,
   LayoutDashboard,
   BookOpen,
   CalendarDays,
+  ClipboardCheck,
   Library,
   ChartNoAxesCombined,
+  Sparkles,
   UserRound,
   LogOut,
   ChevronDown,
@@ -18,7 +22,7 @@ import {
 } from "lucide-react";
 import { Logo } from "./logo";
 import { cn, initials } from "@/lib/utils";
-import { APP_NAV } from "@/lib/constants";
+import { APP_NAV, INTEL_NAV } from "@/lib/constants";
 import { useApp } from "@/components/providers/app-data";
 import { ProgressBar } from "@/components/ui/progress-bar";
 
@@ -29,6 +33,10 @@ export const NAV_ICONS = {
   bookmark: Library,
   "bar-chart-3": ChartNoAxesCombined,
   "user-round": UserRound,
+  sparkles: Sparkles,
+  "clipboard-check": ClipboardCheck,
+  activity: Activity,
+  "alert-triangle": AlertTriangle,
 } as const;
 export function Sidebar() {
   const pathname = usePathname();
@@ -72,6 +80,44 @@ export function Sidebar() {
             const Icon = NAV_ICONS[item.icon];
             const active =
               pathname === item.href || pathname?.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "group relative flex items-center gap-3 rounded-lg px-3 py-3 text-[13px] font-medium transition-all",
+                  active
+                    ? "bg-brand-50 font-semibold text-brand-700"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-ink",
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "h-[18px] w-[18px] shrink-0 transition-transform group-hover:-translate-y-px",
+                    active && "text-brand-600",
+                  )}
+                  strokeWidth={active ? 2 : 1.7}
+                  aria-hidden
+                />
+                {item.label}
+                {active && (
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-600" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+        <p className="eyebrow mb-3 mt-7 px-3">Intelligence</p>
+        <div className="space-y-1.5">
+          {INTEL_NAV.map((item) => {
+            const Icon = NAV_ICONS[item.icon];
+            // "/ai" must not stay highlighted inside "/ai/approvals" etc.
+            const active =
+              item.href === "/ai"
+                ? pathname === "/ai"
+                : pathname === item.href ||
+                  pathname?.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}

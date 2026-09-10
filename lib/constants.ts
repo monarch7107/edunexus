@@ -52,3 +52,10 @@ export const APP_NAV = [
   { href: "/insights", label: "Insights", icon: "bar-chart-3" },
   { href: "/profile", label: "Profile", icon: "user-round" },
 ] as const;
+
+export const INTEL_NAV = [
+  { href: "/ai", label: "AI Command Center", icon: "sparkles" },
+  { href: "/ai/approvals", label: "Approval Center", icon: "clipboard-check" },
+  { href: "/ai/activity", label: "Agent Activity", icon: "activity" },
+  { href: "/risk", label: "Academic Risk", icon: "alert-triangle" },
+] as const;

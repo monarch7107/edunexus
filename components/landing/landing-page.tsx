@@ -432,12 +432,12 @@ export function LandingPage() {
             </Reveal>
           </div>
         </section>
-        <section id="how-it-works" className="bg-[#203e2f] text-[#f5f5e9]">
+        <section id="how-it-works" className="border-y border-hero-line bg-hero text-hero-ink">
           <div className="mx-auto max-w-[1380px] px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
             <Reveal>
               <div className="flex flex-wrap items-end justify-between gap-6">
                 <div>
-                  <p className="mb-4 text-[9px] font-bold uppercase tracking-[.2em] text-[#b4c6a5]">
+                  <p className="mb-4 text-[9px] font-bold uppercase tracking-[.2em] text-hero-muted">
                     A better day starts with a little clarity
                   </p>
                   <h2 className="text-3xl font-semibold leading-tight tracking-[-.045em] sm:text-[40px]">
@@ -445,8 +445,8 @@ export function LandingPage() {
                     <br />A better way to manage everything.
                   </h2>
                 </div>
-                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-[#6a856b]">
-                  <ArrowDownRight className="h-6 w-6 text-[#c0d6af]" />
+                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/20">
+                  <ArrowDownRight className="h-6 w-6 text-gold" />
                 </span>
               </div>
             </Reveal>
@@ -466,14 +466,14 @@ export function LandingPage() {
                 },
               ].map(({ title, text }, i) => (
                 <Reveal key={title} delay={i * 0.06}>
-                  <div className="border-t border-[#536c58] pt-5">
-                    <span className="font-display text-xs text-[#b4c6a5]">
+                  <div className="border-t border-white/15 pt-5">
+                    <span className="font-display text-xs text-gold">
                       0{i + 1}
                     </span>
                     <h3 className="mt-5 text-lg font-semibold tracking-tight">
                       {title}
                     </h3>
-                    <p className="mt-3 max-w-xs text-xs leading-[1.85] text-[#c3cec3]">
+                    <p className="mt-3 max-w-xs text-xs leading-[1.85] text-hero-muted">
                       {text}
                     </p>
                   </div>

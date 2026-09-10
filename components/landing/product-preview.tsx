@@ -25,21 +25,21 @@ const INITIAL_TASKS = [
     title: "Finish the DBMS assignment",
     subject: "Database Systems",
     due: "Today",
-    color: "#829969",
+    color: "rgb(var(--chart-1))",
     done: false,
   },
   {
     title: "Revise chapter 04: Optics",
     subject: "Applied Physics",
     due: "Tomorrow",
-    color: "#b498ca",
+    color: "rgb(var(--chart-3))",
     done: false,
   },
   {
     title: "Read: The design of algorithms",
     subject: "Computer Science",
     due: "Completed",
-    color: "#bd9166",
+    color: "rgb(var(--chart-5))",
     done: true,
   },
 ];
@@ -52,9 +52,9 @@ export function ProductPreview({ compact = false }: { compact?: boolean }) {
       <div className="relative overflow-hidden rounded-xl border border-slate-300/70 bg-surface shadow-[0_18px_65px_-25px_rgb(var(--shadow)/0.25)]">
         <div className="flex h-10 items-center justify-between border-b border-line bg-slate-50 px-4">
           <div className="flex gap-1.5" aria-hidden>
-            <span className="h-1.5 w-1.5 rounded-full bg-[#d9a6a0]" />
-            <span className="h-1.5 w-1.5 rounded-full bg-[#d6c699]" />
-            <span className="h-1.5 w-1.5 rounded-full bg-[#abc19c]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--danger)/0.75)]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-gold/75" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--success)/0.75)]" />
           </div>
           <span className="flex items-center gap-1.5 text-[9px] text-muted">
             <BookOpen className="h-2.5 w-2.5" /> Your academic workspace
@@ -267,7 +267,7 @@ export function ProductPreview({ compact = false }: { compact?: boolean }) {
                               Database Systems · 45 minutes
                             </p>
                           </div>
-                          <div className="rounded-md border-l-2 border-[#b89ccd] bg-slate-50 p-2.5">
+                          <div className="rounded-md border-l-2 border-ai bg-slate-50 p-2.5">
                             <p className="text-[9px] font-semibold">
                               Make time for revision
                             </p>

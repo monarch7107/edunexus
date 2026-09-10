@@ -34,7 +34,10 @@ export default function LearningPage() {
   const [type, setType] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [sort, setSort] = useState("recent");
-  useEffect(() => setSearch(params?.get("search") || ""), [params]);
+  useEffect(() => {
+    setSearch(params?.get("search") || "");
+    setSubjectFilter(params?.get("subject") || "");
+  }, [params]);
   const subjectMap = useMemo(
     () => new Map(subjects.map((s) => [s.id, s])),
     [subjects],

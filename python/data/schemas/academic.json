@@ -1,0 +1,17 @@
+{
+  "dataset": "synthetic_academic_week",
+  "privacy": "synthetic_only",
+  "student_row": {
+    "student_id": "string (synthetic, not a real user id)",
+    "pending_tasks": "int >= 0",
+    "overdue_tasks": "int >= 0",
+    "exam_tasks_7d": "int >= 0",
+    "high_priority_pending": "int >= 0",
+    "completion_rate": "float 0..1",
+    "planned_minutes_7d": "int >= 0",
+    "completed_minutes_7d": "int >= 0",
+    "session_completion_rate": "float 0..1",
+    "active_subjects": "int >= 0",
+    "workload_label": "manageable | heavy | overloaded"
+  }
+}

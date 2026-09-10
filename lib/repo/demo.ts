@@ -312,6 +312,23 @@ export class DemoRepo implements Repo {
     return this.loadDb().sessions;
   }
 
+  async updateSession(
+    id: string,
+    input: Partial<SessionInput>,
+  ): Promise<StudySession> {
+    const db = this.loadDb();
+    const s = db.sessions.find((x) => x.id === id);
+    if (!s) throw new RepoError("not-found", "Study session not found");
+    if (input.title !== undefined) s.title = input.title.trim();
+    if (input.subject_id !== undefined) s.subject_id = input.subject_id;
+    if (input.planned_date !== undefined) s.planned_date = input.planned_date;
+    if (input.duration_minutes !== undefined)
+      s.duration_minutes = input.duration_minutes;
+    s.updated_at = nowIso();
+    this.saveDb(db);
+    return s;
+  }
+
   async createSession(input: SessionInput): Promise<StudySession> {
     const me = this.currentUser();
     const db = this.loadDb();

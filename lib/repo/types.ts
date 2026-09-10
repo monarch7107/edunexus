@@ -48,6 +48,7 @@ export interface Repo {
   // study sessions
   listSessions(): Promise<StudySession[]>;
   createSession(input: SessionInput): Promise<StudySession>;
+  updateSession(id: string, input: Partial<SessionInput>): Promise<StudySession>;
   setSessionStatus(id: string, completed: boolean): Promise<StudySession>;
   deleteSession(id: string): Promise<void>;
 

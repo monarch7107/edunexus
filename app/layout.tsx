@@ -6,6 +6,7 @@ import { ToastProvider } from "@/components/providers/toast";
 import { AppDataProvider } from "@/components/providers/app-data";
 import { ThemeProvider } from "@/components/providers/theme";
 import { themeScript } from "@/lib/theme";
+import { PwaRegister } from "@/components/shell/pwa-register";
 
 export const metadata: Metadata = {
   title: {
@@ -14,6 +15,9 @@ export const metadata: Metadata = {
   },
   description:
     "Everything a student needs to manage and improve their education, in one place. Organize your academics, find your focus, and make progress that matters.",
+  manifest: "/manifest.webmanifest",
+  applicationName: "EduNexus",
+  appleWebApp: { capable: true, title: "EduNexus" },
 };
 export default function RootLayout({
   children,
@@ -28,7 +32,10 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <ToastProvider>
-            <AppDataProvider>{children}</AppDataProvider>
+            <AppDataProvider>
+              <PwaRegister />
+              {children}
+            </AppDataProvider>
           </ToastProvider>
         </ThemeProvider>
       </body>

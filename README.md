@@ -153,7 +153,23 @@ file-capability honesty, focus behavior, and WCAG A/AA automated checks.
 It exercises mobile navigation and both light and dark themes. Test traces,
 screenshots, and reports are ignored by Git. Set `PLAYWRIGHT_BASE_URL` to test a
 separately running instance; `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` optionally
-selects an existing Chromium binary.
+selects an existing Chromium binary (e.g. one distributed via npm when the
+Playwright CDN is unreachable).
+
+### Real PostgreSQL RLS test
+
+```bash
+npm run test:rls   # or: it also runs as part of `npm run test:unit`
+```
+
+`tests/unit/rls-postgres.test.ts` boots **PGlite** (PostgreSQL 16 compiled to
+WASM — a real Postgres engine with real Row Level Security), loads the actual
+`supabase/*.sql` migrations, and runs adversarial two-user checks as a
+non-owning `authenticated` role whose identity comes from a request-scoped
+`auth.uid()`, exactly like Supabase. This validates the RLS policies and schema
+without needing a hosted Supabase project. It is not a substitute for a final
+smoke test against a real Supabase instance, but it does catch policy/schema
+regressions (it caught a policy-quoting syntax error in `v2_agentic.sql`).
 
 **Scope:** the repository interface, Supabase implementation, schema, RLS,
 middleware, and recommendation API are unchanged. The shared data provider now

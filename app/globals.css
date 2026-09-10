@@ -98,7 +98,14 @@
     scale: 0.92;
   }
   .text-link {
-    @apply inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-800;
+    /* Dedicated link text role: AA-guaranteed on the rendered worst case
+       (70% brand tints), gated by scripts/generate-themes.py. The brand
+       scale stays reserved for buttons/graphics. */
+    @apply inline-flex items-center gap-1.5 text-xs font-semibold;
+    color: rgb(var(--link));
+  }
+  .text-link:hover {
+    color: rgb(var(--link-hover));
   }
   .text-link svg {
     transition: transform 0.2s;

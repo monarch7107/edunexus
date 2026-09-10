@@ -128,8 +128,10 @@ tints of the same hues so `text-surface` (dark) stays readable on fills.
 
 ## 4. Brief deviations (accessibility-driven, all documented)
 
-Verified by `scripts/generate-themes.py --check`: **184/184 text pairs ≥ 4.5:1**
-across all 8 theme-modes; focus rings ≥ 3:1.
+Verified by `scripts/generate-themes.py --check`: **224/224 gated pairs pass**
+across all 8 theme-modes (≥ 4.5:1 text, ≥ 3:1 focus). The gate includes the
+**rendered worst case**: links on a 70%-opacity brand tint over surface —
+the composition that direct token pairs miss (see 7).
 
 1. **Danger `#DC2626` → `#C81E1E`** (light text token). `#DC2626` reaches only
    4.2:1 on the badge tint; the darkened token passes everywhere including the
@@ -148,6 +150,20 @@ across all 8 theme-modes; focus rings ≥ 3:1.
    below 3:1 vs surface in some themes — accepted because every value is
    redundantly available as AA text (axis labels + focusable tooltips). Flagged
    as advisory output by the generator, never silently.
+7. **Dedicated `--link` / `--link-hover` text-role tokens** (added 2026-09-11,
+   E2E axe regression). Links sit on 70%-opacity brand tints
+   (`bg-brand-50/70` callouts), where the composited background is slightly
+   darker than pure surface: neon-light `#0066FF` on that composite measured
+   **4.45:1** (under AA) while `brand-600 on surface` (4.83:1) passed the old
+   gate — a fidelity gap in direct-pair checking. Fix: the link text role gets
+   its own tokens (light = brand-700, dark = brand-600, per palette) and the
+   generator now gates `link`/`link-hover` on surface **and** on the 70% tint
+   composite. The brand scale stays reserved for buttons/graphics.
+8. **Neon-dark and aurora-dark `--slate-500` brightened** (same pass): the
+   inactive sidebar nav text measured **4.24:1** (neon) / **4.23:1** (aurora)
+   on dark surface — under AA, and `slate-500 on surface` was not a gated
+   pair. `#64789F → #7A94C4` (6.1:1) and `#6B7F97 → #7A94B4` (5.6:1); the pair
+   is now gated in both modes.
 
 ## 5. Typography / spacing / radius / shadow
 

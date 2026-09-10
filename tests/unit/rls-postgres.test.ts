@@ -199,6 +199,28 @@ describe("academic tables enforce owner isolation", () => {
     const rSeen = await tryQ(B, "select id from public.resources");
     expect(rSeen.rows.length).toBe(0);
   });
+
+  it("profiles and ai_recommendations are isolated per owner", async () => {
+    // profiles PK == auth user id; a profile row exists per seeded user is not
+    // guaranteed here (no trigger fired), so insert explicitly under RLS.
+    const pa = await tryQ(A, "insert into public.profiles (id,full_name) values ($1,'Alice') on conflict (id) do update set full_name='Alice' returning id", [A]);
+    expect(pa.ok).toBe(true);
+    // B must not be able to read A's profile row.
+    const seesA = await tryQ(B, "select id from public.profiles where id=$1", [A]);
+    expect(seesA.rows.length).toBe(0);
+    // B cannot forge a profile owned by A.
+    const forge = await tryQ(B, "insert into public.profiles (id,full_name) values ($1,'hacked') returning id", [A]);
+    expect(forge.ok).toBe(false);
+
+    const ra = await tryQ(
+      A,
+      "insert into public.ai_recommendations (user_id,output_text) values ($1,'A rec') returning id",
+      [A],
+    );
+    expect(ra.ok).toBe(true);
+    const recSeen = await tryQ(B, "select id from public.ai_recommendations");
+    expect(recSeen.rows.length).toBe(0);
+  });
 });
 
 describe("agentic audit tables enforce owner isolation", () => {

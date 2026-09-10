@@ -113,11 +113,16 @@ alter table public.study_sessions    enable row level security;
 alter table public.resources         enable row level security;
 alter table public.ai_recommendations enable row level security;
 
--- profiles: a user can only read/update their own row; insert handled by trigger
+-- profiles: a user can only read/update their own row; insert handled by trigger.
+-- Drop-then-create so re-running this file is safe (idempotent), matching the
+-- generic policy loop below.
+drop policy if exists "profiles_select_own" on public.profiles;
 create policy "profiles_select_own" on public.profiles
   for select using (auth.uid() = id);
+drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_update_own" on public.profiles
   for update using (auth.uid() = id);
+drop policy if exists "profiles_insert_own" on public.profiles;
 create policy "profiles_insert_own" on public.profiles
   for insert with check (auth.uid() = id);
 

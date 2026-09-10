@@ -36,8 +36,17 @@ the browser.
 ## Configure Supabase (production)
 
 1. Create a project at [supabase.com](https://supabase.com) (free tier).
-2. In the SQL Editor, run [`supabase/schema.sql`](supabase/schema.sql) —
-   creates all tables, the auto-profile trigger, RLS policies and indexes.
+2. In the SQL Editor, run the migrations in order — all are additive and
+   **idempotent** (safe to re-run):
+   - [`supabase/schema.sql`](supabase/schema.sql) — V1 tables, auto-profile
+     trigger, RLS policies, indexes.
+   - [`supabase/v2_agentic.sql`](supabase/v2_agentic.sql) — V2 agentic audit
+     tables (`agent_runs`, `agent_actions`, `change_sets`, `change_items`,
+     `agent_approvals`) with owner RLS policies.
+   - [`supabase/v2_agentic_step19.sql`](supabase/v2_agentic_step19.sql) —
+     `proposal_hash` + `mutation_id`.
+   - [`supabase/v2_agentic_step20.sql`](supabase/v2_agentic_step20.sql) — the
+     unique idempotency index on `(user_id, mutation_id)`.
 3. Copy `.env.example` to `.env.local` and fill in:
 
    ```bash
@@ -169,7 +178,35 @@ non-owning `authenticated` role whose identity comes from a request-scoped
 `auth.uid()`, exactly like Supabase. This validates the RLS policies and schema
 without needing a hosted Supabase project. It is not a substitute for a final
 smoke test against a real Supabase instance, but it does catch policy/schema
-regressions (it caught a policy-quoting syntax error in `v2_agentic.sql`).
+regressions (it caught a policy-quoting syntax error in `v2_agentic.sql` and a
+non-idempotent `create policy` in `schema.sql`).
+
+`tests/unit/migration-idempotency.test.ts` additionally applies every migration
+**twice** into real Postgres to guarantee re-running the SQL never errors.
+
+### Hosted-Supabase end-to-end certification
+
+`tests/hosted-supabase.spec.ts` runs the **full agentic flow against a real
+hosted Supabase project** (register → real academic data → Planning Agent →
+approve → real DB mutation → verification → reload proves durable persistence,
+plus a two-real-user isolation check and an unauthenticated-rejection check).
+
+It only runs when a hosted project is actually configured, and **self-skips**
+otherwise — demo/localStorage mode is deliberately NOT accepted as hosted
+evidence. To run it:
+
+```bash
+# after configuring .env.local and applying the migrations:
+npm run build && npm run start        # in one terminal
+RUN_HOSTED_SUPABASE=1 \
+  NEXT_PUBLIC_SUPABASE_URL=... NEXT_PUBLIC_SUPABASE_ANON_KEY=... \
+  npx playwright test tests/hosted-supabase.spec.ts
+```
+
+**Current status:** this suite has NOT been run against a hosted project in the
+build environment (no credentials and network egress to `*.supabase.co` is
+blocked), so hosted Supabase certification remains **BLOCKED** and the overall
+verdict is **CONDITIONALLY READY**. See `SIH_READINESS_REPORT.md` §19.
 
 **Scope:** the repository interface, Supabase implementation, schema, RLS,
 middleware, and recommendation API are unchanged. The shared data provider now

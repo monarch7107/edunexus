@@ -13,7 +13,13 @@
 
 **CONDITIONALLY READY** — EduNexus V1 is stable, understandable, fast, convincing, and demo-safe in **local/demo mode** which is the primary SIH safety path. The product has been hardened with a coherent sample workspace loader, failure-safe refresh, honest file handling, deterministic AI fallback, and judge-defensible security.
 
-The only condition: **production deployment at https://edunexus-pied.vercel.app was unreachable from the sandbox (TLS/SSL_ERROR_SYSCALL) at audit time**, so production runtime could not be verified live. All production claims are based on code inspection (Supabase Auth, RLS, server-side AI) and build verification, not live runtime. Local demo mode is fully verified and judge-proof.
+The only condition: **a hosted Supabase project is not available in this environment**, so live hosted RLS has still never been exercised. However, Step 21 closed the two biggest gaps — see **§18** for the full detail:
+
+- **Row Level Security is now proven against a real PostgreSQL 16 engine** (PGlite/WASM) by loading the actual `supabase/*.sql` migrations and running 39 adversarial cross-user checks as a non-owning `authenticated` role. This caught and fixed a **critical migration bug** in `v2_agentic.sql` (backslash-escaped quotes made the agentic RLS policies a syntax error, so on a real Supabase project the agent audit tables would have had RLS enabled but zero policies).
+- **The offline sync path is implemented and tested** (sync engine + UI wiring + conflict detection), not merely claimed.
+- **Real-browser E2E** (Chromium 152): 8/8 on both `next dev` and `next start`, plus 13/13 V1 regression E2E.
+
+All hosted-production runtime claims still rest on code inspection + real-Postgres RLS + build verification, not a live hosted Supabase instance.
 
 **Final question: "Can our team confidently demonstrate EduNexus V1 to SIH judges without relying on luck, improvisation, or unsupported claims?"**
 **Answer: YES in demo mode (preferred for SIH), with documented fallback playbook. Production should be smoke-tested on venue network before claiming live.**
@@ -119,17 +125,16 @@ Potential P0 if production-only:
 ## 8. Tests Passed
 
 - **typecheck:** `tsc --noEmit` — PASS
-- **lint:** `next lint` — PASS (0 warnings after fix)
-- **unit:** `vitest run` — 6 files, 70 tests PASS
-  - ai-reliability (21): prompt, sanitize, fallback, timeout, failure classes
-  - workspace-refresh (9): coordinator, stale token, allSettled, failure summary
-  - repo-errors (15): classification, auth vs not-found, forbidden, validation, network
-  - dates (11): toDateInput, dayKey, dueState, dateInputFromStored, etc.
-  - cookie-sync (5): getAll, setAll, applyTo redirect
-  - onboarding (9): isOnboarded, validateOnboarding whitespace
+- **lint:** `next lint` — PASS (0 warnings)
+- **unit:** `vitest run` — **118/118 PASS** (11 files)
+  - v2-agentic (29): intent, schema, tool permission, ownership, approvals, edit invalidation, prompt injection, full plan→approve→execute→verify, idempotency, proposal-hash integrity, reject-after-execute guard, uuid record ids
+  - v2 body-limit (4): 413 before parse, 413 chunked, 400 malformed, accepted body
+  - ai-reliability (21), workspace-refresh (9), repo-errors (15), dates (11), rls-and-reload (6), cookie-sync (5), offline-queue (6), onboarding (9), intelligence (3)
+- **python:** `pytest` — 10/10 PASS (features + pipeline; experimental ML kept explicitly non-production)
 - **build:** `next build` — PASS, 14 pages, 87.3kB shared
-- **E2E:** `playwright test` — 1 passed (local date parsing), 12 failed due to missing browser binary in sandbox (network TLS failure downloading Chromium). Not a code failure. Manual journey verified via dev server curl + code inspection. Previous CI (Step 9) had full E2E passing per README.
+- **E2E:** `playwright test` — **7/7 PASS**, executed in this environment with a real Chromium 152 binary (built for serverless platforms with locally compiled NSS libraries). Verified against both `next dev` and `next start` (production build): landing, V2 propose/reject, approve/execute/verify, offline honesty, client user_id rejection, responsive 375/768, two-account demo isolation. Test-only fixes were made (`tests/step18.spec.ts` seeds the demo workspace, which the tests previously assumed).
 - **secret scan:** grep for OPENAI_API_KEY, SUPABASE keys, sk-, service_role — only references to `process.env` and `.env.example`, no hardcoded secrets. Anon key is public by design, service_role never referenced.
+- **Live Supabase/RLS:** **BLOCKED** — no Supabase project/environment available. Not claimed as tested.
 
 ---
 
@@ -295,8 +300,8 @@ Potential P0 if production-only:
 - UI: `ErrorState` with retry, `syncWarning` for write-ok + refresh-fail, never false success, no raw DB messages shown
 
 **Two-account isolation:**
-- Demo: `edunexus_db_{userId}` per user, `prevUserIdRef` clears workspace on account switch
-- Supabase: RLS + `auth.uid()` ensures isolation. Tested via two demo accounts in E2E: second account doesn't see first's data.
+- Demo: `edunexus_db_{userId}` per user, `prevUserIdRef` clears workspace on account switch. Browser E2E (Step 20) verifies user B never sees user A's data in demo mode.
+- Supabase: RLS + `auth.uid()` is the production gate; the SQL policy is present but **live RLS isolation has NOT been executed** (no Supabase environment available). Do not claim production isolation as tested.
 
 ---
 
@@ -762,6 +767,386 @@ Potential P0 if production-only:
 
 ### Phase 16 — Final Verification
 - [x] unit, typecheck, lint, build, secret scan — PASS. E2E partial due to missing browser binary, but 1 passed, others blocked by env, not code. Production repeat pending venue network.
+
+---
+
+## 17. Step 20 Certification Addendum (2026-09-09, branch `arena/01a08823-edunexus`)
+
+This addendum records the Step 20 certification pass and the real issues found and fixed during it. It does not change the frozen V1 baseline; it completes V2 durability and corrects overclaims.
+
+### What was actually validated (executed, not assumed)
+
+| Check | Result |
+| --- | --- |
+| typecheck / lint / production build | PASS |
+| unit tests | 118/118 PASS (was 110; +8 new regressions) |
+| python tests | 10/10 PASS |
+| Playwright E2E (real Chromium 152, `next start`) | 7/7 PASS |
+| Playwright E2E (real Chromium 152, `next dev`) | 7/7 PASS |
+| Dev cold-start plan → approve sequence | PASS (was failing 404) |
+| Secrets in source | PASS (no service-role/private keys) |
+| Live Supabase + RLS | **BLOCKED** (no Supabase environment) |
+
+Browser binaries were unavailable from the official CDN, so the sandbox used a Chromium 152 serverless build (npm `@sparticuz/chromium`) with NSS/NSPR/sqlite compiled from source locally. This is a real browser execution, not a claim from code inspection.
+
+### Real issues found and fixed (with regression tests)
+
+1. **V2 academic writes never persisted in Supabase mode.** `setSessionWriter` was never called; session tools wrote only to process memory, so "student reloads, changes remain" could not hold. **Fixed:** Supabase-backed `DurableSessionStore` wired through the authenticated server client (RLS + explicit `user_id` filters), and delete now goes through the store too.
+2. **Client double-write.** After approval, the client re-applied every change, so with a server-backed writer sessions would duplicate; in Supabase mode the only real write was an unverified client re-apply. **Fixed:** client applies changes only in demo mode; Supabase mode relies on the authorized server tools and refreshes.
+3. **Verification read process memory, not the database.** **Fixed:** `verifyChangeItems` is now async and re-reads via the durable store (Supabase in production, memory in demo).
+4. **`agent_actions` / `agent_approvals` were never persisted and `agent_run_id` was empty.** **Fixed:** actions carry the run id + deterministic `mutation_id`; approvals are upserted; `change_sets`/`change_items` are re-persisted on approve/reject/edit.
+5. **No real idempotency key.** **Fixed:** `mutationIdForItem` (SHA-256 of change set + item), in-process execution ledger, durable lookup in `agent_actions`, plus a partial unique index (`supabase/v2_agentic_step20.sql`) for cross-restart dedup. Repeated approval after a simulated status reset cannot duplicate sessions (tested).
+6. **Agent record ids were not UUIDs** (`uid()` output) while Supabase agent tables use `uuid` PKs — every audit insert would have failed. **Fixed:** v4 UUIDs for runs, actions, change sets/items, approvals (`lib/uuid.ts`).
+7. **Reject-after-execute corrupted lifecycle state** (an executed/verified set could be flipped to `rejected`). **Fixed:** lifecycle guard; regression test asserts 403 and status stays `verified`.
+8. **Proposal "hash" was `JSON.stringify`, not a digest.** **Fixed:** canonical SHA-256 (`hashChangeSet`), still key-order independent (tested).
+9. **Missing bounded body handling (M1).** `/api/ai`, `/api/ai/approve`, `/api/ai/changeset`, `/api/recommend` read bodies unbounded. **Fixed:** `lib/api/body.ts` — 413 before parse via Content-Length and after parse via byte count, applied to all four routes.
+10. **Agent reasoning trusted the client snapshot in Supabase mode.** **Fixed:** in Supabase mode the server loads the real workspace under RLS (`lib/ai/server-context.ts`) and ignores the client snapshot; demo mode keeps the client snapshot.
+11. **`next dev` cold-compile state split.** The first `/api/ai/approve` request after `/api/ai` got a separate module instance and 404'd. **Fixed:** `memoryStore` is a `globalThis` singleton; verified plan→approve on a fresh dev server returns 200.
+12. **E2E tests had never run and were wrong** (blank workspace, offline reload of private pages). **Fixed:** seed the demo workspace through the real repository path; the offline test now asserts persistence after reconnection instead of claiming offline private-page reloads. Removed the prior "two demo accounts tested in E2E" overclaim and replaced it with an actual passing two-account test.
+
+### Still truthful limitations
+
+- **Live Supabase / RLS: BLOCKED** — policies are unit-source-checked only; no live database has ever been exercised. Do not claim production RLS as tested.
+- **Offline queue** (`lib/offline/queue.ts`) is library + unit tested but **not wired into UI sync flows**; the connectivity bar reads it, the queue is never enqueued by the app. Offline mode is honest: AI planning is unavailable offline, private pages are not reloadable offline (shell cache only).
+- Demo-mode agent state is process memory; on Vercel/serverless this is not durable (Supabase mode is the durable path) — this is documented, not hidden.
+- The Python analysis layer remains explicitly experimental (synthetic data).
+
+### Verdict
+
+**CONDITIONALLY READY** — now with real browser E2E evidence for V1 + V2 demo flows. The single remaining blocker for READY is the live Supabase/RLS validation with two real users.
+
+---
+
+## 18. Step 21 Certification — Real PostgreSQL RLS + Offline Sync (2026-09-10, branch `arena/01a08823-edunexus`)
+
+Step 21 targeted the two blockers left open by Step 20: (1) real Row Level
+Security validation, and (2) completing the practical offline synchronization
+path. Both were addressed with real execution, and a **critical migration bug
+was found and fixed** in the process.
+
+### 18.1 Environment status (honest)
+
+- **Hosted Supabase project: NOT AVAILABLE.** No `NEXT_PUBLIC_SUPABASE_URL` /
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY`, no Supabase CLI, no Docker, and outbound TLS
+  to supabase.com fails (`SSL_ERROR_SYSCALL`). **LIVE HOSTED SUPABASE
+  VALIDATION REMAINS BLOCKED.** No credentials were invented.
+- **Real PostgreSQL WAS obtained** via **PGlite (PostgreSQL 16.4 compiled to
+  WASM, an npm package)** — a genuine Postgres engine with a real planner and
+  real RLS. This is not application-level filtering or a mock. The actual
+  migration files in `supabase/*.sql` are loaded into it and exercised
+  adversarially as a non-owning `authenticated` role whose identity comes from
+  a request-scoped `auth.uid()` (JWT `sub` claim), exactly like Supabase.
+
+### 18.2 CRITICAL migration bug found and fixed
+
+`supabase/v2_agentic.sql` created its five agentic RLS policies inside a
+`DO $$ … $$` block using `format(... \"%1$s_all_own\" ...)` with **backslash-
+escaped double quotes** (`\"`). In standard PostgreSQL a `\"` inside a single-
+quoted string is a literal backslash+quote, so the statement is a **syntax
+error** that aborts the whole block. Effect in production: `agent_runs`,
+`agent_actions`, `change_sets`, `change_items`, and `agent_approvals` would have
+had **RLS enabled but ZERO policies** — i.e. every authenticated read/write to
+the agentic audit tables silently denied, breaking the V2 feature on a real
+Supabase project. `schema.sql` used correct unescaped `"` and was unaffected.
+
+Fixed by matching the working `schema.sql` quoting. Because the migration was a
+hard syntax error it had never applied to any live database, so this is a
+correctness fix, not a destructive migration rewrite. Verified: after the fix
+all 11 target tables have policies and all 39 adversarial checks pass.
+
+### 18.3 Real RLS adversarial results (PostgreSQL 16 via PGlite)
+
+Encoded as a permanent test: `tests/unit/rls-postgres.test.ts` (10 cases,
+runs in the normal `vitest` suite; also `npm run test:rls`). It asserts:
+
+| Check | Result |
+| --- | --- |
+| All four migrations load without error | PASS |
+| RLS policies exist on all 6 academic + 5 agentic tables | PASS |
+| RLS enabled on all 11 tables | PASS |
+| A creates/reads/updates/deletes own subjects, sessions, tasks, resources | PASS |
+| B cannot read / update / delete A's rows (all tables) | PASS |
+| A cannot INSERT a row owned by B (WITH CHECK) | PASS |
+| A creates full run→change_set→change_items→approval graph | PASS |
+| B cannot read any of A's agent_runs / change_sets / items / approvals | PASS |
+| `(user_id, mutation_id)` unique index blocks duplicate execution (idempotency) | PASS |
+| Same `mutation_id` reusable by a different user (per-user ledger, not global) | PASS |
+| Unauthenticated session (null `auth.uid()`) sees zero rows | PASS |
+| uuid PKs, `proposal_hash`, `mutation_id`, FK integrity present | PASS |
+
+### 18.4 Offline sync path completed
+
+Step 20 shipped the queue library but nothing enqueued or synced. Step 21 wired
+the practical flow end-to-end **without scope creep** (same 5 safe mutation
+kinds, no arbitrary SQL/URLs/payloads, no offline AI):
+
+- `lib/offline/sync.ts` — a pure, unit-tested sync engine: allowlist-only
+  execution, per-account actor guard (defence in depth on top of RLS),
+  pre-write conflict detection against current server state (never silently
+  overwrites), already-deleted treated as done, failures retained for retry.
+- `lib/offline/use-offline-sync.ts` — browser glue: flushes the signed-in
+  user's queue on reconnect/focus and refreshes; exposes online/pending/
+  conflict counts.
+- `components/providers/app-data.tsx` — the 5 queueable mutations now enqueue
+  when offline **in Supabase mode** (network-backed) with an honest "saved
+  locally" message; **demo mode keeps writing to localStorage** (it is
+  genuinely offline-capable), preserving existing behaviour.
+- `components/shell/connectivity.tsx` — honest indicator with states Synced /
+  Offline / Syncing / N pending / needs attention (+ Retry for conflicts).
+- Tests: `tests/unit/offline-sync.test.ts` (8 cases: flush, account
+  isolation, conflict-no-overwrite, matching-update applies, already-deleted,
+  failure retained, idempotent re-run, order preserved).
+
+Honest limitations retained: **offline private-page reload is NOT supported**
+(the service worker caches only the public shell — `/`, `/login`, `/register`,
+manifest, icon, `_next/static`; it never caches `/api` or any authenticated
+route); **AI planning is never available offline** and says so; the queue is
+account-scoped so User B never inherits User A's pending mutations.
+
+### 18.5 Full verification matrix (all executed this round)
+
+```
+Typecheck ................ PASS
+Lint ..................... PASS
+Unit .................... 136/136 PASS   (was 118; +10 real-Postgres RLS, +8 offline sync)
+Python .................. 10/10 PASS     (experimental/synthetic, unchanged)
+Production build ......... PASS
+E2E — next dev .......... 8/8 PASS       (real Chromium 152)
+E2E — next start (prod) . 8/8 PASS       (real Chromium 152)
+E2E — V1 regression ..... 13/13 PASS     (step9 + workspace, prod server)
+Real PostgreSQL RLS ..... 39/39 checks PASS (10 vitest cases)
+Cross-user isolation .... PASS           (all academic + agentic tables)
+Server identity ......... PASS           (user_id from session only; client user_id rejected)
+Approval integrity ...... PASS           (hash-bound; edit/reorder/modify invalidates)
+Idempotency ............. PASS           (mutation_id ledger + unique index)
+Verification ............ PASS           (re-reads durable store; no false success)
+Prompt injection ........ PASS           (malicious task titles never authorize tools)
+Request limits .......... PASS           (413 before/after parse on all AI + recommend routes)
+Offline sync ............ PASS           (engine unit-tested; UI wired)
+Conflict handling ....... PASS           (detected, server value never overwritten)
+Account isolation ....... PASS           (demo E2E + queue scoping + RLS)
+Secret scan ............. PASS           (no service_role/secret in code or client bundle)
+```
+
+### 18.6 Step 21 certification matrix
+
+| Area | Result | Evidence | Status |
+|---|---|---|---|
+| V1 regression | No behavioural change | 13/13 V1 E2E + 136 unit | PASS |
+| V2 agentic workflow | Full slice works | v2-agentic 29 + E2E approve/verify | PASS |
+| Supabase persistence | Code path correct; real PG proves schema/RLS | rls-postgres.test.ts | PASS (hosted BLOCKED) |
+| RLS | Real PostgreSQL enforcement | 39 adversarial checks | PASS |
+| Cross-user isolation | B never sees/edits A | rls-postgres + demo E2E | PASS |
+| Server identity | Session-derived only | authorization.ts + E2E | PASS |
+| Approval integrity | Hash-bound, edit-invalidated | v2-agentic tests | PASS |
+| Idempotency | mutation_id + unique index | v2-agentic + rls-postgres | PASS |
+| Verification | Re-reads durable store | verification.ts + tests | PASS |
+| Prompt injection | Data never becomes instruction | v2-agentic + E2E | PASS |
+| Request limits | 413 enforced | body-limit tests | PASS |
+| PWA | Shell-only cache, safe SW | sw.js audit | PASS |
+| Offline queue | Typed, account-scoped | offline-queue tests | PASS |
+| Offline sync | Engine + UI wired | offline-sync tests + E2E | PASS |
+| Conflict handling | No silent overwrite | offline-sync tests | PASS |
+| Account isolation | Queue + RLS scoped | E2E + unit | PASS |
+| Playwright Dev | 8/8 | real Chromium | PASS |
+| Playwright Production | 8/8 (+13 V1) | real Chromium | PASS |
+| Responsive | 375 / 768 / desktop | E2E | PASS |
+| Python analysis | Experimental only | pytest 10/10 | PASS (synthetic) |
+| Secret scan | No secrets leaked | grep code + bundle | PASS |
+| Production build | Compiles | next build | PASS |
+| Hosted Supabase live | No project available | env probe | BLOCKED |
+
+### 18.7 Remaining limitations (unchanged honesty)
+
+- **Hosted Supabase / live RLS: BLOCKED.** RLS is now proven against a real
+  PostgreSQL 16 engine using the actual migrations, but a hosted Supabase
+  project has still never been exercised. Before claiming production, apply the
+  migrations to a real project and re-run the two-user check there.
+- **Offline private-page reload: UNSUPPORTED** by design (shell-only cache).
+- Demo-mode agent audit state is process memory (Supabase is the durable path).
+- Python ML remains experimental/synthetic; no FastAPI (no online-inference
+  requirement).
+
+### 18.8 Verdict
+
+**CONDITIONALLY READY.** The product is demoable and technically credible, and
+Step 21 removed the biggest unknowns: RLS is now proven against a real Postgres
+engine (and a real, feature-breaking migration bug was fixed), and the offline
+sync path is implemented and tested rather than merely claimed. The one
+remaining condition to reach **READY FOR SIH DEMO** is applying the migrations
+to a hosted Supabase project and re-running the two-user adversarial check
+against it — an infrastructure step, not a code defect.
+
+---
+
+## 19. Step 22 — Final SIH Certification (2026-09-10, branch `arena/01a08823-edunexus`)
+
+Step 22 is the final certification pass. Its purpose was to attempt hosted
+Supabase activation and, if achieved, promote the verdict to READY FOR SIH
+DEMO. The honest outcome: **hosted Supabase remains BLOCKED in this environment
+for two independent reasons**, so the verdict stays **CONDITIONALLY READY** —
+but every other certification requirement was re-executed and passed, and two
+more real correctness bugs were found and fixed.
+
+### 19.1 Hosted Supabase environment — BLOCKED (two independent reasons)
+
+1. **No credentials configured.** `NEXT_PUBLIC_SUPABASE_URL` /
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY` are unset; there is no `.env.local`; no
+   Supabase CLI, `psql`, or Docker is present.
+2. **Sandbox network egress is allowlisted.** Verified by probe:
+   `github.com` → 200 and `registry.npmjs.org` → 200, but `api.openai.com`,
+   `google.com`, and any `*.supabase.co` host fail with `SSL_ERROR_SYSCALL` /
+   DNS refusal. So **even with valid anon credentials, this sandbox physically
+   cannot reach a hosted Supabase project** to run live auth, hosted RLS, or
+   hosted-Supabase E2E.
+
+Consequently: **HOSTED SUPABASE CERTIFICATION: BLOCKED.** No hosted claim is
+made. No credentials were invented. Demo mode is explicitly NOT presented as
+hosted evidence.
+
+### 19.2 Real bugs found and fixed this round
+
+1. **`schema.sql` was not idempotent (P1).** The three `profiles_*` policies
+   used bare `create policy`, so re-running `schema.sql` — a routine setup /
+   troubleshooting action on a real Supabase project — failed with
+   `policy ... already exists`. Fixed with `drop policy if exists` before each
+   `create`, matching the file's own generic policy loop and the agentic
+   migrations. Now applying all four migrations **twice** into real PostgreSQL
+   succeeds cleanly. Locked by `tests/unit/migration-idempotency.test.ts`.
+2. **RLS coverage gap.** The Step 21 RLS harness did not adversarially exercise
+   `profiles` or `ai_recommendations`. Added cross-user isolation + forge-
+   rejection cases for both, so all 11 tables are now covered.
+
+### 19.3 What WAS certified this round (all executed here)
+
+- **Real PostgreSQL RLS** (PGlite / PostgreSQL 16.4) against the actual
+  migrations, now **11 vitest cases** covering all 6 academic + 5 agentic
+  tables: owner CRUD, cross-user read/update/delete denial, `WITH CHECK`
+  forge-rejection, per-user idempotency ledger, and null-`auth.uid()`
+  lockout. **Label: PASS on real Postgres (PGlite); NOT hosted-Supabase.**
+- **Migration idempotency** (double-apply into real Postgres). **PASS.**
+- **Unit suite:** 140/140 (14 files). **PASS.**
+- **Python:** 10/10 (experimental/synthetic). **PASS.**
+- **Real-browser E2E (Chromium 152):** step18 **8/8 on `next dev`** and
+  **8/8 on `next start`**; V1 regression **13/13 on `next start`**.
+  **PASS (demo/local mode — real browser, not hosted Supabase).**
+- **Hosted-Supabase E2E suite** (`tests/hosted-supabase.spec.ts`) exists and
+  is real, but **self-skips** (3 skipped, never faked) unless
+  `RUN_HOSTED_SUPABASE=1` + Supabase env vars are present.
+  **Label: NOT RUN (hosted BLOCKED).**
+- **Server identity:** `POST /api/ai` returns **401 unauthenticated**;
+  `user_id` derives only from the authenticated session; client `user_id`
+  rejected (400). **PASS** (unit + E2E + live dev-server logs).
+- **Security scan:** no `service_role` / secret values in source or client
+  bundle; no `NEXT_PUBLIC_OPENAI*`; `OPENAI_API_KEY`/`OPENAI_BASE_URL` read
+  only in server modules behind `runtime = "nodejs"` routes; client copilot
+  imports only a TS `type` and reaches AI solely via `/api`. SW never caches
+  `/api` or private routes. **PASS.**
+- **Typecheck / Lint / Production build:** **PASS.**
+- **Performance sanity:** largest first-load JS ~242 kB; shared 87.3 kB; offline
+  queue is bounded (typed kinds only, `clearSynced` prunes); AI rate-limited
+  20/min. No blockers.
+
+### 19.4 Approval integrity / idempotency / verification / prompt injection
+
+Re-confirmed via the unit suite (v2-agentic 29 cases) and real-Postgres tests:
+hash-bound approvals invalidated by any material edit (payload/target/entity/
+operation/add/remove/reorder); `mutation_id` ledger + partial unique index
+prevent duplicates (proven on real Postgres); verification re-reads the durable
+store and never reports false success; malicious task titles are treated as data
+and never authorize tools or self-approve. These are **UNIT-TESTED + REAL-
+POSTGRES** for the DB-enforced parts; the **hosted** end-to-end variants live in
+`tests/hosted-supabase.spec.ts` and are **NOT RUN** (hosted BLOCKED).
+
+### 19.5 EDUNEXUS FINAL SIH CERTIFICATION
+
+| Area | Result | Evidence | Status |
+|---|---|---|---|
+| V1 regression | No behavioural change | 13/13 V1 E2E (prod) + unit | PASS |
+| V2 agentic workflow | Full slice works | v2-agentic 29 + E2E approve/verify | PASS (demo-mode E2E) |
+| Hosted Supabase | Not reachable / no creds | env + network probe | BLOCKED |
+| PostgreSQL schema | Correct + idempotent | migration-idempotency 3 | PASS (real Postgres/PGlite) |
+| RLS | 11-table adversarial | rls-postgres 11 | PASS (real Postgres/PGlite); hosted NOT TESTED |
+| Cross-user isolation | B never sees A | rls-postgres + demo E2E | PASS (PGlite + demo); hosted NOT TESTED |
+| Server identity | Session-only; 401 unauth | authorization.ts + E2E + logs | PASS |
+| Durable audit | Persist run/action/set/item/approval | audit-persist + unit | UNIT-TESTED; hosted NOT TESTED |
+| Approval integrity | Hash-bound, edit-invalidated | v2-agentic tests | PASS (unit) |
+| Idempotency | mutation_id + unique index | v2-agentic + rls-postgres | PASS (unit + real Postgres) |
+| Verification | Re-reads durable store | verification.ts + tests | PASS (unit) |
+| Prompt injection | Data never authorizes | v2-agentic + E2E | PASS |
+| Failure handling | Safe, classified | repo-errors 15 + body-limit 4 | PASS (unit) |
+| Request limits | 413 before/after parse | body-limit 4 + E2E | PASS |
+| PWA | Shell-only cache | sw.js audit | PASS |
+| Offline queue | Typed, account-scoped | offline-queue 6 | PASS (unit) |
+| Offline sync | Engine + UI wired | offline-sync 8 + E2E | PASS (demo/unit) |
+| Offline conflict | No silent overwrite | offline-sync tests | PASS (unit) |
+| Account isolation | Queue + RLS scoped | E2E + rls-postgres | PASS |
+| Service worker security | No /api, no token cache | sw.js audit | PASS |
+| Playwright Dev | 8/8 | real Chromium | PASS |
+| Playwright Production | 8/8 (+13 V1) | real Chromium | PASS |
+| Hosted-Supabase E2E | Suite exists, self-skips | hosted-supabase.spec.ts | BLOCKED (NOT RUN) |
+| Responsive | 375 / 768 / desktop | E2E | PASS |
+| Python | Experimental only | pytest 10/10 | PASS (synthetic) |
+| Secret scan | No secrets leaked | grep code + bundle | PASS |
+| Production build | Compiles | next build | PASS |
+
+### 19.6 Exact test results (Step 22)
+
+```
+Typecheck ................ PASS
+Lint ..................... PASS
+Unit .................... 140/140 PASS   (14 files; +3 migration idempotency, +1 RLS profiles/recs)
+Python .................. 10/10 PASS     (experimental/synthetic)
+Production build ......... PASS
+E2E — next dev .......... 8/8 PASS       (real Chromium 152, demo mode)
+E2E — next start (prod) . 8/8 PASS       (real Chromium 152, demo mode)
+E2E — V1 regression ..... 13/13 PASS     (step9 + workspace, prod server)
+Real PostgreSQL RLS ..... 11/11 cases PASS (PGlite; all 11 tables)
+Migration idempotency ... 3/3 PASS       (double-apply into real Postgres)
+Hosted-Supabase E2E ..... 3 SKIPPED      (BLOCKED — no hosted project/network)
+Secret scan ............. PASS
+```
+
+### 19.7 Remaining limitations (honest)
+
+- **HOSTED SUPABASE CERTIFICATION: BLOCKED** — no project/credentials AND the
+  sandbox cannot reach `*.supabase.co`. RLS, schema, and idempotency are proven
+  against a real PostgreSQL engine (PGlite) using the actual migrations, and a
+  real hosted-Supabase E2E suite is committed and ready — but no hosted instance
+  has ever been exercised. This is the sole blocker to READY.
+- **Offline private-page reload: UNSUPPORTED** by design (shell-only SW cache).
+- **AI planning is never available offline** (stated honestly in the UI).
+- **Durable audit** to `agent_*` tables is UNIT-TESTED and RLS-verified on real
+  Postgres, but the hosted round-trip is NOT TESTED.
+- **Demo-mode** agent audit state is process memory (Supabase is the durable
+  path).
+- **Python ML** is experimental/synthetic; no FastAPI (no online-inference need).
+
+### 19.8 FINAL VERDICT
+
+**CONDITIONALLY READY.**
+
+Everything that can be certified without a reachable hosted Supabase project has
+been certified with real execution — real-browser E2E (V1 + V2), real-PostgreSQL
+RLS across all 11 tables, migration idempotency, server identity, approval
+integrity, idempotency, verification, prompt-injection resistance, offline
+safety, and a clean security scan — and two more real bugs were fixed. The one
+remaining requirement for **READY FOR SIH DEMO** is exercising a hosted Supabase
+project (apply migrations, create two real users, run
+`tests/hosted-supabase.spec.ts`). That is an infrastructure/network step this
+sandbox cannot perform, **not** a code defect.
+
+### 19.9 Next action
+
+On a machine with outbound network:
+
+1. Create a Supabase project; copy the URL + anon key into `.env.local`.
+2. Run `supabase/schema.sql`, then `v2_agentic.sql`, `v2_agentic_step19.sql`,
+   `v2_agentic_step20.sql` (all now idempotent — safe to re-run).
+3. In Supabase Auth, disable "Confirm email" for the demo.
+4. `npm run build && npm run start`, then
+   `RUN_HOSTED_SUPABASE=1 npx playwright test tests/hosted-supabase.spec.ts`.
+5. If green, promote the verdict to **READY FOR SIH DEMO**.
 
 ---
 

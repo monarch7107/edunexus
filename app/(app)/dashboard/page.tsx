@@ -30,6 +30,9 @@ import { SubjectFormModal } from "@/components/academics/subject-form-modal";
 import { ResourceFormModal } from "@/components/learning/resource-form-modal";
 import { StudySessionCard } from "@/components/planner/study-session-card";
 import { AiRecommendationCard } from "@/components/dashboard/ai-recommendation-card";
+import { AIInsightCard } from "@/components/ai/insight-card";
+import { WorkloadCard } from "@/components/ai/workload-card";
+import { computeAcademicSignals } from "@/lib/intelligence";
 import { DemoSeedCard, DemoBanner } from "@/components/demo/demo-seed-card";
 import { StudyChart } from "@/components/insights/study-chart";
 import { WeekStrip, weekStart } from "@/components/planner/week-strip";
@@ -77,6 +80,10 @@ export default function DashboardPage() {
         : 0,
     };
   }, [tasks, sessions]);
+  const signals = useMemo(
+    () => computeAcademicSignals(subjects, tasks, sessions),
+    [subjects, tasks, sessions],
+  );
   const visibleTasks = (
     taskView === "today" ? rankTasks(stats.dueToday) : rankTasks(tasks)
   ).slice(0, 4);
@@ -129,18 +136,13 @@ export default function DashboardPage() {
               Your academic command center
             </div>
             <h2 className="text-xl font-bold tracking-[-.04em] sm:text-[25px]">
-              {stats.pending.length
-                ? "Good things take a little focus."
-                : stats.completed
-                  ? "Look at you making progress."
-                  : "A fresh space for big possibilities."}
+              AI detected {signals.pendingTasks} {signals.pendingTasks === 1 ? "priority" : "priorities"}
+              {signals.subjectAttention.length
+                ? ` · ${signals.subjectAttention.length} subject${signals.subjectAttention.length === 1 ? "" : "s"} needing attention`
+                : ""}
             </h2>
             <p className="mt-2 text-xs leading-relaxed text-slate-600">
-              {stats.dueToday.length
-                ? `You have ${stats.dueToday.length} ${stats.dueToday.length === 1 ? "task" : "tasks"} due today. Let’s make a little room for progress.`
-                : tasks.length
-                  ? `${stats.completed} tasks behind you. ${stats.pending.length} next steps ahead. You’ve got this.`
-                  : "Bring your subjects, plans, and ideas together. Let’s make this semester yours."}
+              Workload is {signals.workload}, based only on tasks, deadlines, and study sessions in your workspace.
             </p>
             {!subjects.length && (
               <button
@@ -476,6 +478,12 @@ export default function DashboardPage() {
           </Reveal>
         </div>
         <div className="min-w-0 space-y-5">
+          <Reveal delay={0.08}>
+            <AIInsightCard signals={signals} />
+          </Reveal>
+          <Reveal delay={0.1}>
+            <WorkloadCard signals={signals} />
+          </Reveal>
           <Reveal delay={0.1}>
             <AiRecommendationCard />
           </Reveal>

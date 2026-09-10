@@ -33,6 +33,7 @@ import {
 } from "@/lib/workspace-refresh";
 import { useToast } from "./toast";
 import { friendlyError } from "@/lib/errors";
+import { enqueue, isolateAccount, type MutationKind } from "@/lib/offline/queue";
 
 /** Outcome of one workspace refresh round. */
 export interface RefreshOutcome {
@@ -81,6 +82,7 @@ interface AppDataValue {
   deleteTask: (id: string) => Promise<void>;
   // sessions
   createSession: (input: SessionInput) => Promise<void>;
+  updateSession: (id: string, input: Partial<SessionInput>) => Promise<void>;
   setSessionStatus: (id: string, completed: boolean) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
   // resources
@@ -170,6 +172,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       ) {
         // Account changed: drop the previous user's data immediately so it
         // can never leak into the new session, even briefly.
+        isolateAccount(prevUserIdRef.current, current.id);
         clearWorkspace();
         setDatasetErrors({});
         setSyncWarning(null);
@@ -263,6 +266,38 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     [refresh, toast],
   );
 
+  // Offline-first wrapper for the five queueable mutations. When the browser is
+  // offline we record a typed, account-scoped queue entry (never AI, never
+  // arbitrary payloads) and report an honest "saved locally" state instead of
+  // failing; the sync engine flushes it on reconnect. When online we run the
+  // normal repository write unchanged (V1 behaviour is preserved exactly).
+  const queueOrRun = useCallback(
+    async (
+      kind: MutationKind,
+      payload: Record<string, unknown>,
+      online: () => Promise<unknown>,
+      okMessage: string,
+    ) => {
+      const isOffline =
+        typeof navigator !== "undefined" && "onLine" in navigator && !navigator.onLine;
+      const uid = prevUserIdRef.current;
+      // Demo mode is genuinely offline-capable: writes go to localStorage and
+      // always succeed with no network, so we run them directly. Only the
+      // network-backed Supabase repo needs the offline queue — there an offline
+      // write is captured as a typed, account-scoped queue entry and flushed on
+      // reconnect, with an honest "saved locally" message instead of a failure.
+      if (isOffline && uid && isSupabaseConfigured) {
+        enqueue(uid, kind, payload);
+        toast.warning(
+          "You’re offline. This change is saved locally and will sync when you’re back online.",
+        );
+        return;
+      }
+      await run(online, okMessage);
+    },
+    [run, toast],
+  );
+
   const value = useMemo<AppDataValue>(
     () => ({
       repo,
@@ -290,6 +325,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         }, "Welcome back!"),
       signOut: () =>
         run(async () => {
+          isolateAccount(prevUserIdRef.current, null);
           await repo.signOut();
         }, "Signed out."),
       saveProfile: (input) =>
@@ -309,15 +345,27 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           await repo.deleteSubject(id);
         }, "Subject deleted."),
       createTask: (input) =>
-        run(async () => {
-          await repo.createTask(input);
-        }, "Task added."),
+        queueOrRun(
+          "createTask",
+          { ...input },
+          async () => {
+            await repo.createTask(input);
+          },
+          "Task added.",
+        ),
       updateTask: (id, input) =>
-        run(async () => {
-          await repo.updateTask(id, input);
-        }, "Task updated."),
+        queueOrRun(
+          "updateTask",
+          { id, input: { ...input } },
+          async () => {
+            await repo.updateTask(id, input);
+          },
+          "Task updated.",
+        ),
       setTaskStatus: (id, completed) =>
-        run(
+        queueOrRun(
+          "setTaskStatus",
+          { id, completed },
           async () => {
             await repo.setTaskStatus(id, completed);
           },
@@ -328,9 +376,18 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           await repo.deleteTask(id);
         }, "Task deleted."),
       createSession: (input) =>
+        queueOrRun(
+          "createSession",
+          { ...input },
+          async () => {
+            await repo.createSession(input);
+          },
+          "Study session planned.",
+        ),
+      updateSession: (id, input) =>
         run(async () => {
-          await repo.createSession(input);
-        }, "Study session planned."),
+          await repo.updateSession(id, input);
+        }, "Study session updated."),
       setSessionStatus: (id, completed) =>
         run(
           async () => {
@@ -339,9 +396,14 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           completed ? "Session completed!" : "Session moved back to planned.",
         ),
       deleteSession: (id) =>
-        run(async () => {
-          await repo.deleteSession(id);
-        }, "Session deleted."),
+        queueOrRun(
+          "deleteSession",
+          { id },
+          async () => {
+            await repo.deleteSession(id);
+          },
+          "Session deleted.",
+        ),
       createResource: (input) =>
         run(async () => {
           await repo.createResource(input);
@@ -367,6 +429,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       syncWarning,
       refresh,
       run,
+      queueOrRun,
     ],
   );
 

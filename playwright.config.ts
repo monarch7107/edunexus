@@ -16,8 +16,22 @@ export default defineConfig({
       ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
         ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
         : {}),
-      args: ["--no-sandbox", "--disable-dev-shm-usage"],
+      args: [
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        // Extra flags used when running the npm-distributed Chromium inside a
+        // constrained sandbox (no /dev/shm, no GPU). Harmless in normal CI.
+        ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+          ? ["--disable-gpu"]
+          : []),
+      ],
     },
+  },
+  webServer: {
+    command: "npm run dev",
+    url: process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000",
+    reuseExistingServer: true,
+    timeout: 120000,
   },
   projects: [
     {

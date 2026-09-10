@@ -22,6 +22,8 @@ import { ProgressBar, ProgressRing } from "@/components/ui/progress-bar";
 import { StatCard } from "@/components/ui/stat-card";
 import { Reveal } from "@/components/ui/motion";
 import { StudyChart, studyDays } from "@/components/insights/study-chart";
+import { WorkloadCard } from "@/components/ai/workload-card";
+import { computeAcademicSignals } from "@/lib/intelligence";
 import { useApp } from "@/components/providers/app-data";
 import {
   dueState,
@@ -57,6 +59,10 @@ export default function InsightsPage() {
       activeDays,
     };
   }, [tasks, sessions, range]);
+  const signals = useMemo(
+    () => computeAcademicSignals(subjects, tasks, sessions),
+    [subjects, tasks, sessions],
+  );
   if (loading)
     return <LoadingState label="Bringing your progress into perspective…" />;
   return (
@@ -313,6 +319,9 @@ export default function InsightsPage() {
           )}
         </Card>
       </Reveal>
+      <div className="mt-5">
+        <WorkloadCard signals={signals} />
+      </div>
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Reveal>
           <Card className="h-full">

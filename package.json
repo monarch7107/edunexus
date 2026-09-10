@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
-    "test:rls": "vitest run tests/unit/rls-postgres.test.ts",
+    "test:rls": "vitest run tests/security/rls-postgres.test.ts",
     "test": "npm run test:unit"
   },
   "dependencies": {

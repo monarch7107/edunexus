@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/states";
 import { useQuietMotion } from "@/components/ui/motion";
 import { dueBadge } from "@/lib/utils";
 import type { RecommendationResult } from "@/lib/types";
-import { buildSnapshot, fetchRecommendation } from "@/lib/ai";
+import { buildSnapshot, fetchRecommendation } from "@/lib/recommendation";
 import { useApp } from "@/components/providers/app-data";
 import { useToast } from "@/components/providers/toast";
 

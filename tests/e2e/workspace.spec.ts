@@ -1,11 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { toDateInput, dayKey, rankTasks } from "../lib/utils";
+import { toDateInput, dayKey, rankTasks } from "../../lib/utils";
 import {
   validatePreviewFile,
   resourceKind,
   safeResourceUrl,
-} from "../lib/resources";
+} from "../../lib/resources";
 
 const PASSWORD = "StudySpace-42!";
 async function createWorkspace(page: Page, name = "Alex Sharma") {

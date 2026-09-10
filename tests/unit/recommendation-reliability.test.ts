@@ -6,8 +6,8 @@ import {
   sanitizeAiResponse,
   validateSnapshot,
   type ValidatedSnapshot,
-} from "@/lib/ai-server";
-import { fetchRecommendation, validateRecommendationResult } from "@/lib/ai";
+} from "@/lib/recommendation-server";
+import { fetchRecommendation, validateRecommendationResult } from "@/lib/recommendation";
 
 function snapshot(): ValidatedSnapshot {
   return {

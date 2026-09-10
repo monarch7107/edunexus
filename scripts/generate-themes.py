@@ -12,7 +12,7 @@ Usage:
 Contrast rule: text pairs must reach >= 4.5:1, large/graphic-only pairs >= 3:1.
 Where the brief's hex could not meet AA in its text role (e.g. #16A34A as body
 text), the token uses a darkened AA-safe derivation and the brief hex is kept
-for charts/graphics. Every deviation is documented in docs/design-tokens.md.
+for charts/graphics. Every deviation is documented in docs/design/design-tokens.md.
 """
 import sys
 

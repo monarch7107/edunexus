@@ -17,6 +17,7 @@ import { Sidebar } from "./sidebar";
 import { MobileNavigation } from "./mobile-navigation";
 import { Logo } from "./logo";
 import { WorkspaceSearch } from "./workspace-search";
+import { ConnectivityBar } from "./connectivity";
 import { APP_NAV } from "@/lib/constants";
 import { initials } from "@/lib/utils";
 import { isOnboarded } from "@/lib/profile";
@@ -97,6 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Logo />
           </Link>
           <div className="flex items-center gap-3 sm:gap-5">
+            <ConnectivityBar />
             <WorkspaceSearch />
             <span className="hidden h-5 w-px bg-line sm:block" />
             <ThemePicker />

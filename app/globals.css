@@ -45,6 +45,8 @@
     --info: 63 108 152;
     --info-soft: 237 243 250;
     --info-line: 202 219 234;
+    --gold: 184 148 78;
+    --ivory: 250 247 240;
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
@@ -88,6 +90,8 @@
     --info: 148 191 232;
     --info-soft: 29 43 57;
     --info-line: 50 73 96;
+    --gold: 212 180 110;
+    --ivory: 30 36 32;
   }
   :root[data-accent="indigo"] {
     --brand-50: 244 243 252;
@@ -204,7 +208,7 @@
     animation: field-shake 0.2s ease-out;
   }
   .card {
-    @apply min-w-0 rounded-xl border border-line bg-surface shadow-card;
+    @apply min-w-0 rounded-2xl border border-line bg-surface shadow-card;
   }
   .card-interactive {
     transition:

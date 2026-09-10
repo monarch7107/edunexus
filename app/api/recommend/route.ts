@@ -6,16 +6,17 @@ import {
   runAiRecommendation,
   validateSnapshot,
 } from "@/lib/ai-server";
+import { readBoundedJson } from "@/lib/api/body";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  // Bounded body: reject oversized payloads with 413 before parsing (M1).
+  const parsed = await readBoundedJson(request);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: parsed.status });
   }
+  const body = parsed.value;
 
   const validated = validateSnapshot(body);
   if (!validated.ok) {

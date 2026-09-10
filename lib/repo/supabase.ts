@@ -296,6 +296,30 @@ export class SupabaseRepo implements Repo {
     return (data as StudySession[]) ?? [];
   }
 
+  async updateSession(
+    id: string,
+    input: Partial<SessionInput>,
+  ): Promise<StudySession> {
+    const { data, error } = await this.client
+      .from("study_sessions")
+      .update({
+        ...(input.title !== undefined ? { title: input.title.trim() } : {}),
+        ...(input.subject_id !== undefined ? { subject_id: input.subject_id } : {}),
+        ...(input.planned_date !== undefined
+          ? { planned_date: input.planned_date }
+          : {}),
+        ...(input.duration_minutes !== undefined
+          ? { duration_minutes: input.duration_minutes }
+          : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select("*")
+      .single();
+    if (error) throw toRepoError(error, "Could not update the study session.");
+    return data as StudySession;
+  }
+
   async createSession(input: SessionInput): Promise<StudySession> {
     if (!input.title?.trim()) {
       throw new RepoError("validation", "Session title is required.");

@@ -17,6 +17,8 @@ const config: Config = {
         muted: rgb("muted"),
         line: rgb("line"),
         "on-accent": rgb("on-accent"),
+        gold: rgb("gold"),
+        ivory: rgb("ivory"),
         brand: Object.fromEntries(
           [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((n) => [
             n,

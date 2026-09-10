@@ -9,11 +9,11 @@ import { themeScript } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: {
-    default: "EduNexus — A little more focus. A lot more possibility.",
+    default: "EduNexus — Your academic intelligence system",
     template: "%s · EduNexus",
   },
   description:
-    "Everything a student needs to manage and improve their education, in one place. Organize your academics, find your focus, and make progress that matters.",
+    "EduNexus understands your academic context and helps you decide what to do next — while keeping you in control.",
 };
 export default function RootLayout({
   children,
@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="bg-canvas" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

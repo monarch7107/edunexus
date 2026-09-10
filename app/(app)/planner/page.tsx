@@ -38,8 +38,8 @@ export default function PlannerPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | "planned" | "completed">("all");
   useEffect(() => {
-    setSearch(params.get("search") || "");
-    if (params.get("search")) setView("agenda");
+    setSearch(params?.get("search") || "");
+    if (params?.get("search")) setView("agenda");
   }, [params]);
   const subjectMap = useMemo(
     () => new Map(subjects.map((s) => [s.id, s])),

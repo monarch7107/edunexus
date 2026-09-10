@@ -71,7 +71,7 @@ export function Sidebar() {
           {APP_NAV.map((item) => {
             const Icon = NAV_ICONS[item.icon];
             const active =
-              pathname === item.href || pathname.startsWith(item.href + "/");
+              pathname === item.href || pathname?.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}

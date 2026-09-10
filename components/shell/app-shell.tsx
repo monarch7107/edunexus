@@ -140,7 +140,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <ErrorState message={error} onRetry={() => void refresh()} />
             </div>
           )}
-          <PageTransition pageKey={pathname}>{children}</PageTransition>
+          <PageTransition pageKey={pathname ?? "workspace"}>{children}</PageTransition>
           <footer className="mt-9 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-5 text-[10px] text-muted">
             <span>Made for the way you learn.</span>
             <Link

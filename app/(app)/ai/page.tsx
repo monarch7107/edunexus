@@ -1,0 +1,3 @@
+import { AICommandBox, AgentTimeline, ChangeSet } from "@/components/ai/ai-workflow";
+import { PageHeader } from "@/components/shell/page-header";
+export default function AIPage() { return <div className="flex flex-col gap-6"><PageHeader eyebrow="Intelligence" title="AI command center" description="Ask EduNexus to reason over your academic context. You approve every meaningful change." /><AICommandBox /><div className="grid gap-5 lg:grid-cols-[.72fr_1.28fr]"><div className="card"><div className="mb-5"><h2 className="section-title">Planning Agent</h2><p className="mt-1 text-xs text-muted">Transparent activity for the current request</p></div><AgentTimeline /></div><ChangeSet /></div></div>; }

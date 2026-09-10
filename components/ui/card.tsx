@@ -10,6 +10,14 @@ export function Card({
     </div>
   );
 }
+export function CardContent({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("flex flex-col gap-4", className)} {...props}>{children}</div>;
+}
+
 export function CardHeader({
   title,
   action,

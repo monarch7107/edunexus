@@ -41,9 +41,9 @@ export default function AcademicsPage() {
   const [filters, setFilters] = useState<TaskFilterState>(EMPTY_FILTERS);
   useEffect(() => {
     setFilters({
-      search: query.get("search") || "",
-      subjectId: query.get("subject") || "",
-      status: query.get("status") || "",
+      search: query?.get("search") || "",
+      subjectId: query?.get("subject") || "",
+      status: query?.get("status") || "",
       priority: "",
     });
   }, [query]);

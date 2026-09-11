@@ -115,27 +115,41 @@ test("AI surfaces render under every palette", async ({ page }) => {
   }
 });
 
-test("every palette passes axe on flagship routes", async ({ page }) => {
-  test.setTimeout(240000);
+test("every palette passes axe on flagship routes (light + dark)", async ({
+  page,
+}) => {
+  // Light AND dark: dark mode previously had untested contrast territory
+  // (e.g. neon/aurora sidebar nav at 4.2:1) — both modes are gated now.
+  test.setTimeout(480000);
   await createWorkspace(page);
   for (const { value, label } of PALETTES) {
     await page.goto("/profile");
     await page.getByRole("button", { name: label }).first().click();
     await expect(page.locator("html")).toHaveAttribute("data-palette", value);
-    for (const route of ["/dashboard", "/ai/approvals"]) {
-      await page.goto(route);
-      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-      await page.waitForTimeout(700);
-      const audit = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-        .analyze();
-      expect(
-        audit.violations.map((v) => ({
-          id: v.id,
-          nodes: v.nodes.map((n) => n.target),
-        })),
-        `Accessibility: ${value} ${route}`,
-      ).toEqual([]);
+    for (const mode of ["Light", "Dark"] as const) {
+      // Mode controls live in /profile's appearance section — the route loop
+      // below leaves that page, so re-enter it before every mode switch.
+      await page.goto("/profile");
+      await page.getByRole("button", { name: mode, exact: true }).click();
+      await expect(page.locator("html")).toHaveAttribute(
+        "data-theme",
+        mode.toLowerCase(),
+      );
+      for (const route of ["/dashboard", "/ai/approvals"]) {
+        await page.goto(route);
+        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+        await page.waitForTimeout(700);
+        const audit = await new AxeBuilder({ page })
+          .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+          .analyze();
+        expect(
+          audit.violations.map((v) => ({
+            id: v.id,
+            nodes: v.nodes.map((n) => n.target),
+          })),
+          `Accessibility: ${value} ${mode.toLowerCase()} ${route}`,
+        ).toEqual([]);
+      }
     }
   }
 });

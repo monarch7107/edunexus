@@ -5,7 +5,7 @@ import {
   logAiDiagnostic,
   runAiRecommendation,
   validateSnapshot,
-} from "@/lib/ai-server";
+} from "@/lib/recommendation-server";
 import { readBoundedJson } from "@/lib/api/body";
 
 export const runtime = "nodejs";

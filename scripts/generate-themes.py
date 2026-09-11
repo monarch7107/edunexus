@@ -12,7 +12,7 @@ Usage:
 Contrast rule: text pairs must reach >= 4.5:1, large/graphic-only pairs >= 3:1.
 Where the brief's hex could not meet AA in its text role (e.g. #16A34A as body
 text), the token uses a darkened AA-safe derivation and the brief hex is kept
-for charts/graphics. Every deviation is documented in docs/design-tokens.md.
+for charts/graphics. Every deviation is documented in docs/design/design-tokens.md.
 """
 import sys
 
@@ -33,6 +33,7 @@ SPEC = {
             "brand-300": "93B4FD", "brand-400": "5B8DEF", "brand-500": "2F6BEE",
             "brand-600": "2563EB", "brand-700": "1D4ED8", "brand-800": "1D3FA0",
             "brand-900": "16295E", "on-accent": "FFFFFF",
+            "link": "1D4ED8", "link-hover": "1D3FA0",
             "danger": "C81E1E", "danger-soft": "FDECEC", "danger-line": "F3C1C1",
             "warning": "92400E", "warning-soft": "FBF3E2", "warning-line": "EAD3A6",
             "success": "166534", "success-soft": "E9F7EE", "success-line": "B5DFC2",
@@ -59,6 +60,7 @@ SPEC = {
             "brand-300": "2E589B", "brand-400": "3F74C9", "brand-500": "5B93E5",
             "brand-600": "8FB4F5", "brand-700": "A9C4F7", "brand-800": "C6D8FA",
             "brand-900": "DFE9FD", "on-accent": "0B1B33",
+            "link": "8FB4F5", "link-hover": "A9C4F7",
             "danger": "F1938B", "danger-soft": "3A2320", "danger-line": "6B3A34",
             "warning": "EAC57C", "warning-soft": "3A2F1B", "warning-line": "6B5A2F",
             "success": "7BD3A1", "success-soft": "153227", "success-line": "2A5A44",
@@ -87,6 +89,7 @@ SPEC = {
             "brand-300": "D9BE74", "brand-400": "C9A227", "brand-500": "A98620",
             "brand-600": "8A6D1C", "brand-700": "6E5715", "brand-800": "574512",
             "brand-900": "45380F", "on-accent": "FFFFFF",
+            "link": "6E5715", "link-hover": "574512",
             "danger": "C81E1E", "danger-soft": "FDECEC", "danger-line": "F3C1C1",
             "warning": "92400E", "warning-soft": "FBF3E2", "warning-line": "EAD3A6",
             "success": "166534", "success-soft": "E9F7EE", "success-line": "B5DFC2",
@@ -113,6 +116,7 @@ SPEC = {
             "brand-300": "6E5A20", "brand-400": "8A7226", "brand-500": "A98C2E",
             "brand-600": "D4AF37", "brand-700": "E3C565", "brand-800": "F0D68A",
             "brand-900": "F7E7B8", "on-accent": "141414",
+            "link": "D4AF37", "link-hover": "E3C565",
             "danger": "F1938B", "danger-soft": "3B1D1D", "danger-line": "7F2E2E",
             "warning": "EAC57C", "warning-soft": "3A2C14", "warning-line": "6E5A2A",
             "success": "7BD3A1", "success-soft": "14301F", "success-line": "2A5A3E",
@@ -141,6 +145,7 @@ SPEC = {
             "brand-300": "80B3FF", "brand-400": "4D94FF", "brand-500": "1F75FF",
             "brand-600": "0066FF", "brand-700": "0052CC", "brand-800": "0040A1",
             "brand-900": "0A1F44", "on-accent": "FFFFFF",
+            "link": "0052CC", "link-hover": "0040A1",
             "danger": "C81E1E", "danger-soft": "FDECEC", "danger-line": "F3C1C1",
             "warning": "92400E", "warning-soft": "FBF3E2", "warning-line": "EAD3A6",
             "success": "166534", "success-soft": "E9F7EE", "success-line": "B5DFC2",
@@ -160,13 +165,16 @@ SPEC = {
             "canvas": "050816", "surface": "0B1026", "ink": "EAFBFF",
             "muted": "8B9BB4", "line": "1C2748", "shadow": "000000",
             "slate-50": "0D1430", "slate-100": "131B3A", "slate-200": "1C2748",
-            "slate-300": "2A3A5C", "slate-400": "4A5F86", "slate-500": "64789F",
+            # slate-500 brightened (was 64789F, 4.24:1 on surface — under AA for
+            # sidebar nav text; 7A94C4 gives 6.1:1). See design-tokens.md.
+            "slate-300": "2A3A5C", "slate-400": "4A5F86", "slate-500": "7A94C4",
             "slate-600": "8B9BB4", "slate-700": "A9BAD2", "slate-800": "C6D6E8",
             "slate-900": "EAFBFF", "slate-950": "F4FDFF",
             "brand-50": "0A1A3D", "brand-100": "10254F", "brand-200": "173463",
             "brand-300": "1F4480", "brand-400": "2A5AA3", "brand-500": "2F6FE4",
             "brand-600": "3B82F6", "brand-700": "63A1F8", "brand-800": "93C2FA",
             "brand-900": "C4DFFC", "on-accent": "04122B",
+            "link": "3B82F6", "link-hover": "63A1F8",
             "danger": "F1938B", "danger-soft": "3D1D22", "danger-line": "7A3038",
             "warning": "E8B84B", "warning-soft": "38300F", "warning-line": "6E5C1F",
             "success": "5EEA8D", "success-soft": "0F3524", "success-line": "1F6B47",
@@ -200,6 +208,7 @@ SPEC = {
             "success": "166534", "success-soft": "E9F7EE", "success-line": "B5DFC2",
             "success-strong": "15803D", "on-success": "FFFFFF",
             "info": "0369A1", "info-soft": "E8F4FC", "info-line": "B7D8EE",
+            "link": "1049C2", "link-hover": "123B93",
             "gold": "EABF55", "on-gold": "3A2C07", "ivory": "F7FAFC",
             "ai": "0C6B5E", "ai-soft": "E6F6F2", "ai-line": "A9E0D4",
             "on-ai": "FFFFFF",
@@ -214,13 +223,16 @@ SPEC = {
             "canvas": "07111F", "surface": "0D1B2A", "ink": "E8F4F8",
             "muted": "9FB0C3", "line": "1B2C40", "shadow": "000000",
             "slate-50": "0D1727", "slate-100": "122033", "slate-200": "1B2C40",
-            "slate-300": "2A3E55", "slate-400": "4E637D", "slate-500": "6B7F97",
+            # slate-500 brightened (was 6B7F97, 4.23:1 on surface — under AA for
+            # sidebar nav text; 7A94B4 gives 5.6:1). See design-tokens.md.
+            "slate-300": "2A3E55", "slate-400": "4E637D", "slate-500": "7A94B4",
             "slate-600": "9FB0C3", "slate-700": "BAC8D8", "slate-800": "D2DEE9",
             "slate-900": "E8F4F8", "slate-950": "F4FAFC",
             "brand-50": "0F2145", "brand-100": "14305C", "brand-200": "1B4076",
             "brand-300": "255494", "brand-400": "2F6BC4", "brand-500": "3F83E8",
             "brand-600": "5B9BF5", "brand-700": "84B6F8", "brand-800": "AECDFB",
             "brand-900": "D2E5FD", "on-accent": "06182E",
+            "link": "5B9BF5", "link-hover": "84B6F8",
             "danger": "F1938B", "danger-soft": "3A2226", "danger-line": "744147",
             "warning": "EAC57C", "warning-soft": "382F15", "warning-line": "6E5C26",
             "success": "7BD3A1", "success-soft": "123026", "success-line": "2A5A44",
@@ -246,7 +258,10 @@ PAIRS = [
     ("muted", "surface", 4.5, "secondary on surface"),
     ("muted", "canvas", 4.5, "secondary on canvas"),
     ("on-accent", "brand-600", 4.5, "primary button text"),
-    ("brand-600", "surface", 4.5, "links on surface"),
+    ("brand-600", "surface", 4.5, "brand-600 text on surface (non-link roles)"),
+    ("link", "surface", 4.5, "link text on surface"),
+    ("link-hover", "surface", 4.5, "link hover on surface"),
+    ("slate-500", "surface", 4.5, "nav / secondary text on surface"),
     ("brand-700", "brand-50", 4.5, "badge text on tint"),
     ("brand-800", "brand-100", 4.5, "badge text on tint"),
     ("on-success", "success-strong", 4.5, "success button text"),
@@ -289,6 +304,13 @@ def ratio(a: str, b: str) -> float:
     return (hi + 0.05) / (lo + 0.05)
 
 
+def composite(fg: str, bg: str, alpha: float) -> str:
+    """Alpha-composite an fg hex over a bg hex (both solid); return hex."""
+    f = [int(fg[i:i + 2], 16) for i in (0, 2, 4)]
+    b = [int(bg[i:i + 2], 16) for i in (0, 2, 4)]
+    return "".join(f"{round(alpha * f[i] + (1 - alpha) * b[i]):02X}" for i in range(3))
+
+
 def triplet(hexv: str) -> str:
     return " ".join(str(int(hexv[i:i + 2], 16)) for i in (0, 2, 4))
 
@@ -311,6 +333,23 @@ def check() -> bool:
                     ok = False
                 print(f"{status:4} {palette:8} {mode:5} {r:5.2f} (min {minimum}) "
                       f"{fg} on {bg} — {desc}")
+            # Rendered worst case: links actually sit on 70%-opacity brand
+            # tints (e.g. the sidebar "bg-brand-50/70" callout), not on pure
+            # surface. Direct token pairs can all pass while the composited
+            # UI fails AA — this check models the composition (regression
+            # guard for the neon #0066FF-on-brand-50/70 = 4.45:1 failure
+            # caught by E2E axe, 2026-09-11).
+            tint = composite(tokens["brand-50"], tokens["surface"], 0.70)
+            for fg, desc in (
+                ("link", "link on 70% brand tint"),
+                ("link-hover", "link hover on 70% brand tint"),
+            ):
+                r = ratio(tokens[fg], tint)
+                status = "ok" if r >= 4.5 else "FAIL"
+                if r < 4.5:
+                    ok = False
+                print(f"{status:4} {palette:8} {mode:5} {r:5.2f} (min 4.5) "
+                      f"{fg} on tint70 — {desc}")
             for fg, bg, desc in ADVISORY:
                 r = ratio(tokens[fg], tokens[bg])
                 print(f"info {palette:8} {mode:5} {r:5.2f} (advisory) "
@@ -326,6 +365,7 @@ CSS_ORDER = [
     "brand-50", "brand-100", "brand-200", "brand-300", "brand-400",
     "brand-500", "brand-600", "brand-700", "brand-800", "brand-900",
     "on-accent",
+    "link", "link-hover",
     "danger", "danger-soft", "danger-line",
     "warning", "warning-soft", "warning-line",
     "success", "success-soft", "success-line", "success-strong", "on-success",

@@ -1,3 +1,10 @@
+> **HISTORICAL DOCUMENT (2026-09-09/10).** This is the step-era certification
+> report preserved verbatim as development history. Test counts, SHAs, branch
+> names, and verdicts in it describe the state at that time — they are NOT
+> current claims. Current verification is produced by the test suite (see
+> `docs/testing/testing.md`), and the current repository state is described in
+> `README.md` and `docs/architecture/`.
+
 # EduNexus — SIH 2026 Demo Readiness Report (Step 12)
 
 **Date:** 2026-09-09 (Asia/Kolkata)

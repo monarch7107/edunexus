@@ -85,7 +85,7 @@ export function DemoSeedCard({
               ? "New here? Load a coherent demo workspace — 4 subjects, 7 tasks with overdue/today/tomorrow deadlines, study sessions, and resources. Clearly marked as sample, safe to clear."
               : seeded
               ? "This workspace contains sample data for demonstration. It is clearly distinguishable — look for the sample banner. Your real data (if any) is alongside it. You can keep or remove it."
-              : "Load additional sample data to see how EduNexus connects subjects, tasks, deadlines, study planning, and insights."}
+              : "Load additional sample data to see how AIESES connects subjects, tasks, deadlines, study planning, and insights."}
           </p>
 
           {!compact && (

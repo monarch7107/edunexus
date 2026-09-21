@@ -8,6 +8,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { EmptyState, LoadingState } from "@/components/ui/states";
 import { useApp } from "@/components/providers/app-data";
 import { computeAcademicSignals, workloadCopy } from "@/lib/intelligence";
+import { diagnoseLearnerWeakAreas } from "@/lib/eduadapt";
 import { minutesToLabel } from "@/lib/utils";
 import { useMemo } from "react";
 
@@ -15,6 +16,10 @@ export default function RiskPage() {
   const { subjects, tasks, sessions, loading } = useApp();
   const signals = useMemo(
     () => computeAcademicSignals(subjects, tasks, sessions),
+    [subjects, tasks, sessions],
+  );
+  const eduAdapt = useMemo(
+    () => diagnoseLearnerWeakAreas(subjects, tasks, sessions),
     [subjects, tasks, sessions],
   );
 
@@ -111,6 +116,65 @@ export default function RiskPage() {
                 Open planner
               </ButtonLink>
             </div>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="EduAdapt — Adaptive Skill Diagnostics"
+              description="Rule-based skill tracing connecting overdue workloads and study deficits with concrete pedagogical actions."
+            />
+            <CardContent className="space-y-3">
+              {eduAdapt.identifiedWeakAreas.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {eduAdapt.identifiedWeakAreas.map((w) => (
+                      <div
+                        key={w.skillId}
+                        className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-xs space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-amber-900">{w.skillName}</span>
+                          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                            {w.level.replace("_", " ").toUpperCase()} ({w.masteryPct}%)
+                          </span>
+                        </div>
+                        <p className="text-muted text-[11px]">{w.evidence.join(" · ")}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-2">
+                      Targeted Adaptive Next Actions
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href="/learning/diksha"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-surface px-3 py-1.5 text-xs text-brand-700 font-medium hover:bg-brand-50 transition-colors"
+                      >
+                        Open DIKSHA Curriculum <ArrowRight className="size-3" />
+                      </Link>
+                      <Link
+                        href="/ai/tutor"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-surface px-3 py-1.5 text-xs text-brand-700 font-medium hover:bg-brand-50 transition-colors"
+                      >
+                        Ask AI Tutor to Explain <ArrowRight className="size-3" />
+                      </Link>
+                      <Link
+                        href="/assessments"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-surface px-3 py-1.5 text-xs text-brand-700 font-medium hover:bg-brand-50 transition-colors"
+                      >
+                        Take Practice Assessment <ArrowRight className="size-3" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted">
+                  All active subjects are currently performing above risk thresholds.
+                </p>
+              )}
+            </CardContent>
           </Card>
 
           <Card>

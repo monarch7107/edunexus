@@ -14,6 +14,9 @@ const PROTECTED = [
   "/ai",
   "/risk",
   "/resources",
+  "/workspace",
+  "/assessments",
+  "/teacher",
 ];
 const AUTH_PAGES = ["/login", "/register"];
 
@@ -96,6 +99,9 @@ export const config = {
     "/ai/:path*",
     "/risk/:path*",
     "/resources/:path*",
+    "/workspace/:path*",
+    "/assessments/:path*",
+    "/teacher/:path*",
     "/login",
     "/register",
   ],

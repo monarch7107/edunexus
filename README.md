@@ -1,226 +1,203 @@
-# EduNexus — SIH 2026 Final Prototype
+# AIESES
 
-> **Everything a student needs for managing and improving their education, in
-> one place.** — and, from V2, an adaptive academic ecosystem that
-> understands the student, their learning needs, and their academic journey.
+> **AI-Enabled Integrated Smart Education System**  
+> *Smart India Hackathon 2026 · Problem Statement ID: 26207 · Theme: Smart Education · Team: Vision Forge*
 
-**Smart India Hackathon 2026 · Problem Statement ID `26207` · AICTE, MIC –
-Student Innovation · Software · Smart Education**
+---
 
-> *"Student Innovation – Smart education, a concept that describes learning in
-> digital age. It enables learners to learn more effectively, efficiently,
-> flexibly and comfortably."*
+## 1. Project Overview
 
-## What this is
+**AIESES** (AI-Enabled Integrated Smart Education System) is an integrated, adaptive educational platform developed by **Team Vision Forge** for SIH 2026 (Problem Statement 26207: *Smart Education*). 
 
-- **V1 — Reliable unified academic workspace.** Subjects, tasks (deadlines,
-  priorities, completion), study sessions, resources, onboarding, profile,
-  dashboard, insights, deterministic academic signals, and one constrained AI
-  feature — a study-priority recommendation built on the student's real data,
-  with a **deterministic fallback** so the app never breaks.
-- **V2 — Safe agentic academic intelligence** *(the adaptive layer built on
-  the V1 foundation)*. First vertical slice: **"Optimize my study
-  schedule."** The Planning Agent proposes a Change Set; the student
-  **Approves / Edits / Rejects**; only then does authorized execution run, is
-  verified by rereading the durable store, and is written to the activity
-  history. *The LLM can reason. It cannot authorize itself.*
-- **Premium four-theme design system** (Sapphire · Royal Gold · Neon ·
-  Aurora Scholar) × light/dark, on semantic tokens with a WCAG AA contrast
-  gate.
-- **PWA / offline foundation** with honest capability boundaries.
-- **Supabase + PostgreSQL + RLS**, with a zero-infrastructure demo mode
-  behind the same repository contract.
+Built on the hardened foundation of the EduNexus codebase, AIESES unifies the entire learning lifecycle:
+1. **Core Learning**: Unified subjects, tasks with priorities and deadlines, study session scheduler, learning library, and real-time progress insights.
+2. **EduAdapt**: Rule-based knowledge diagnostics that evaluate student performance, assessment scores, and study deficits to detect weak skills and recommend targeted learning interventions.
+3. **AI Pedagogical Layer**: Six structured tutoring modes (Q&A, Conceptual Explanation, ELI5 Simplicity, Step-by-Step Examples, Active Practice Challenges, Action Recommendations) with guaranteed server-side deterministic fallbacks so the system never breaks.
+4. **Government Content Integration**: DIKSHA Sunbird curriculum gateway connecting official NCERT, CBSE, and State Board open educational resources (CC-BY-NC-SA 4.0) with verifiable attribution.
+5. **Multilingual / Vernacular Learning**: Native translation abstraction and language switcher supporting English, Hindi (हिन्दी), Tamil (தமிழ்), Telugu (తెలుగు), Marathi (मराठी), and Bengali (বাংলা).
+6. **Student Creation Workspace & IDE**: Markdown document studio, project documentation notes, client-side PDF / print export engine, and a secure isolated code runner for JavaScript and Python (zero server code execution).
+7. **Educator & Teacher Portal**: Comprehensive cohort monitoring, class progress rosters, assessment management, submission grading, and class-wide weak area clustering.
 
-Full documentation: [`docs/`](docs/) — architecture, AI safety, data,
-security, testing, design, and the SIH kit (problem statement, demo script,
-technical summary, historical certification report).
+---
 
-## Tech stack
+## 2. Architecture Target & Conceptual Organization
 
-- **Next.js 14** (App Router) + **React 18** + **TypeScript**
-- **Tailwind CSS** (token-driven) + **Framer Motion** (respects reduced motion)
-- **Supabase** (Postgres + Auth + Row Level Security) — optional at dev time
-- AI: any OpenAI-compatible Chat Completions API, **server-side only**
-- Testing: Vitest, **PGlite** (real PostgreSQL 16 in WASM for RLS tests),
-  Playwright + axe, pytest (experimental Python research)
-- Deploy: **Vercel** — production: `https://edunexus-pied.vercel.app`
+```text
+AIESES
+│
+├── Core Learning
+│   ├── Learning Resources & Personal Library (/learning)
+│   ├── Discovery & Curriculum Navigation (/learning/diksha)
+│   ├── Student Dashboard (/dashboard)
+│   ├── Teacher Dashboard & Cohort Monitoring (/teacher)
+│   ├── Assessments & Practice Quizzes (/assessments)
+│   ├── Progress Tracking & Insights (/insights)
+│   └── Workload & Academic Signals (/risk)
+│
+├── EduAdapt
+│   ├── Learner Profile & Goals (/profile, /onboarding)
+│   ├── Skill Mapping (Foundations, Core Theory, Practical, Advanced)
+│   ├── Weak Area Detection Engine (lib/eduadapt/index.ts)
+│   └── Targeted Practice Recommendations
+│
+├── AI Layer
+│   ├── Planning Agent / Schedule Copilot (/ai)
+│   ├── Approval Center & Auditing (/ai/approvals, /ai/activity)
+│   ├── AI Pedagogical Tutor (/ai/tutor, /api/ai/tutor)
+│   └── Deterministic Offline & Local Fallbacks
+│
+├── Government Content
+│   └── DIKSHA Sunbird Gateway (lib/government/diksha.ts, /learning/diksha)
+│
+├── Multilingual / Vernacular
+│   ├── Language Selection (components/theme/language-picker.tsx)
+│   ├── Translation Abstraction (lib/i18n/languages.ts)
+│   └── Vernacular Learning Support (EN, HI, TA, TE, MR, BN)
+│
+└── Student Creation Workspace
+    ├── Document & Notes Studio (/workspace)
+    ├── Markdown Editor with Live Split-Preview
+    ├── PDF Export / Formatted Print Engine
+    ├── Isolated Client-Side JavaScript Runner
+    └── Simulated Python Algorithmic Runner
+```
 
-The app runs in two modes via a single repository interface (`lib/repo`):
+---
 
-| Mode         | When                                    | Backend                                            |
-| ------------ | --------------------------------------- | -------------------------------------------------- |
-| **Demo**     | `NEXT_PUBLIC_SUPABASE_*` env vars unset | Browser localStorage — zero setup, fully clickable, clearly labeled |
-| **Supabase** | env vars set                            | Postgres + Supabase Auth + RLS                     |
+## 3. Technology Stack
 
-## Run locally
+- **Frontend & Full Stack Framework**: Next.js 14.2.35 (App Router) + React 18.3.1 + TypeScript 5.6.2
+- **Styling & Design System**: Tailwind CSS 3.4.11 + Framer Motion 11.18.2 (with strict `prefers-reduced-motion` compliance)
+- **Typography & Theming**: DM Sans + Manrope variable fonts, 4 selectable palettes (*Sapphire Blue*, *Royal Gold*, *Neon*, *Aurora Scholar*) × light/dark modes with WCAG AA contrast compliance
+- **Database & Security**: PostgreSQL + Supabase (Auth + Row Level Security policies), PGlite 0.2.17 (in-memory WASM PostgreSQL 16 for testing RLS)
+- **Repository Pattern**: Unified dual-mode store (`lib/repo/`) supporting zero-config local browser `localStorage` demo mode and production Supabase backend
+- **AI Integration**: OpenAI-compatible Chat Completions API (server-side only) with instant, labeled deterministic fallbacks
+- **Testing**: Vitest 2.1.9 (22 test suites, 172 tests passing), PGlite RLS certification, Next.js typecheck, ESLint
 
+---
+
+## 4. Setup Instructions & Local Development
+
+### Prerequisites
+- Node.js >= 18.18.0 (tested on v22.22.3)
+- npm >= 9.0.0 (tested on 10.9.8)
+
+### Installation
 ```bash
+# Clone the repository
+git clone https://github.com/monarch7107/edunexus.git
+cd edunexus
+
+# Install dependencies
 npm install
-npm run dev
-# open http://localhost:3000
 ```
 
-Demo mode needs no configuration: register an account and all data persists
-in the browser. An empty dashboard offers **"Load sample workspace"**
-(coherent, dynamically-dated sample data, clearly marked as demo data).
+### Environment Variables
+Copy `.env.example` to `.env.local`:
+```bash
+cp .env.example .env.local
+```
 
-## Configure Supabase (production)
+| Variable | Description | Default |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase Project URL (leave empty for zero-setup local demo mode) | Unset |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Anon Public Key | Unset |
+| `OPENAI_API_KEY` | Optional OpenAI key for live AI Tutor & Copilot reasoning | Unset (uses deterministic fallback) |
+| `OPENAI_BASE_URL` | OpenAI API Base URL | `https://api.openai.com/v1` |
+| `OPENAI_MODEL` | LLM Model Identifier | `gpt-4o-mini` |
+| `DIKSHA_SUNBIRD_API_URL` | DIKSHA Sunbird Gateway Endpoint | Unset (uses certified NCERT provider) |
 
-1. Use the project `ohuyargnnzasdfjbffva` (ap-northeast-1) —
-   `https://ohuyargnnzasdfjbffva.supabase.co`.
-   (⚠️ `ossgcgnsmftbymwtyvpn` is a different, incorrect project — never use it.)
-2. All V2 migrations are already applied to the hosted project. For a fresh
-   project, run in order — all are additive and **idempotent**:
-   - [`supabase/schema.sql`](supabase/schema.sql) — V1 tables, auto-profile
-     trigger, RLS policies, indexes
-   - [`supabase/v2_agentic.sql`](supabase/v2_agentic.sql) — V2 agentic audit
-     tables (`agent_runs`, `agent_actions`, `change_sets`, `change_items`,
-     `agent_approvals`) with owner RLS
-   - [`supabase/v2_agentic_step19.sql`](supabase/v2_agentic_step19.sql) —
-     `proposal_hash` + `mutation_id`
-   - [`supabase/v2_agentic_step20.sql`](supabase/v2_agentic_step20.sql) — the
-     unique idempotency index on `(user_id, mutation_id)`
-3. Copy `.env.example` to `.env.local` and fill in:
+### Running the Application
+```bash
+# Development server (bound to 0.0.0.0:3000)
+npm run dev
 
-   ```bash
-   NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-public-key>
-   # optional AI:
-   OPENAI_API_KEY=sk-...
-   OPENAI_BASE_URL=https://api.openai.com/v1   # any OpenAI-compatible endpoint
-   OPENAI_MODEL=gpt-4o-mini
-   ```
+# Production build & start
+npm run build
+npm run start
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-> **SIH demo tip:** in Supabase, go to _Authentication → Sign In / Providers →
-> Email_ and turn **OFF** "Confirm email" so new accounts get a session
-> immediately after register.
+---
 
-## Pages
+## 5. Testing & Verification Evidence
 
-| Route                 | Purpose                                                                               |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| `/`                   | Landing (problem, solution, features, CTA)                                            |
-| `/register`, `/login` | Email/password auth                                                                   |
-| `/onboarding`         | Name, course, branch, semester, goals (validated)                                     |
-| `/dashboard`          | Greeting, priority tasks, overdue, today's sessions, AI plan, progress, quick actions |
-| `/academics`          | Subjects (CRUD) + tasks (CRUD, filters, deadlines, priorities, status)                |
-| `/planner`            | Study sessions by date, weekly strip, study-time totals, schedule copilot             |
-| `/planner/adaptive`   | V2 adaptive planner (gateway-connected)                                               |
-| `/learning`           | Notes & links per subject, search/filter, honest file-upload boundary                 |
-| `/resources/intelligence` | Resource intelligence (deterministic subject attention)                          |
-| `/insights`           | Completion, overdue, 7-day study chart, subject progress, priorities, workload        |
-| `/risk`               | Academic risk overview (rule-based signals + evidence)                                |
-| `/ai`                 | **AI Command Center** — Copilot + Planning Agent runs                                |
-| `/ai/approvals`       | **Approval Center** — pending/decided Change Sets (approve / edit / reject)           |
-| `/ai/activity`        | **Agent Activity** — full run history (proposed → approved → executed → verified)     |
-| `/profile`            | Edit details, backend mode, appearance (4 themes × light/dark), sign out              |
-
-## AI — what it actually is
-
-**V1 — constrained study recommendation** (`POST /api/recommend`). Uses only
-the student's supplied data snapshot (goals, subjects, tasks, sessions,
-minutes studied). Server-only provider key, ~15 s provider / ~25 s client
-timeouts, snapshot **and** output validation, and a deterministic fallback
-(overdue → due today → nearest deadline → highest priority). Not a chatbot.
-
-**V2 — Planning Agent** (`/api/ai`, `/api/ai/approve`, `/api/ai/changeset`).
-Gateway (server identity, client `user_id` rejection, bounded bodies, rate
-limits) → Orchestrator → Planning Agent (reasons only over supplied context)
-→ plan validated against the student's real data → **Change Set**
-(`proposal_hash`) → student approval → authorized tools
-(`getSubjects` / `getTasks` / `getStudySessions`,
-`create/update/deleteStudySession`) → durable execution with
-`mutation_id` idempotency → **verification reread** → activity history.
-See [`docs/ai/safety-and-agent-model.md`](docs/ai/safety-and-agent-model.md).
-
-## Security (summary)
-
-- RLS on every table: `auth.uid() = user_id`; anon key public by design;
-  **no service-role key anywhere in the repo**
-- Server-derived identity; client `user_id` rejected; auth failures fail closed
-- AI keys server-side only; proposal hashes; mutation idempotency;
-  verification rereads; prompt-injection posture (academic content = untrusted
-  data)
-- Offline queue: allowlisted mutations only, per-account isolation, no
-  caching of `/api` or private pages in the service worker
-- Known, honestly-documented items (Supabase advisor warnings, demo-mode
-  hashing, `npm audit` on the Next 14 tree):
-  [`docs/security/security.md`](docs/security/security.md)
-
-## Testing & quality
+All tests pass without errors:
 
 ```bash
-npm run typecheck      # TypeScript
-npm run lint           # ESLint (Next core-web-vitals + typescript)
-npm run test:unit      # Vitest: unit + PGlite RLS + migration idempotency
-npm run test:rls       # RLS only (real PostgreSQL engine via PGlite)
-npm run build          # production build
-npm run test:e2e       # Playwright journeys (npx playwright install chromium)
-# experimental python research (see python/README.md):
-cd python && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
-PYTHONPATH=python python -m pytest python/tests -q
+# Run unit & security test suite (172 tests across 22 suites)
+npm run test:unit
+
+# Run TypeScript static type checking
+npm run typecheck
+
+# Run Next.js code linting
+npm run lint
+
+# Run real PostgreSQL 16 RLS security tests (via PGlite WASM)
+npm run test:rls
 ```
 
-`tests/e2e/hosted-supabase.spec.ts` runs the full agentic flow against the
-real hosted project but **self-skips** unless `RUN_HOSTED_SUPABASE=1` plus the
-Supabase env vars are set — demo mode is never accepted as hosted evidence.
-Suite layout: `tests/unit` (Vitest), `tests/security` (Vitest + PGlite RLS),
-`tests/e2e` (Playwright). Details and the reporting rules:
-[`docs/testing/testing.md`](docs/testing/testing.md).
+### Test Results Summary
+- `tests/security/rls-postgres.test.ts`: PASS (11 tests — real PostgreSQL RLS isolation)
+- `tests/security/rls-aieses.test.ts`: PASS (2 tests — documents & assessment submissions isolation)
+- `tests/security/migration-idempotency.test.ts`: PASS (3 tests)
+- `tests/unit/diksha.test.ts`: PASS (4 tests — NCERT attribution, filtering, metadata)
+- `tests/unit/tutor.test.ts`: PASS (4 tests — 6 tutoring modes, fallback reliability)
+- `tests/unit/eduadapt.test.ts`: PASS (2 tests — weak area diagnosis & action generation)
+- `tests/unit/runner.test.ts`: PASS (3 tests — JS sandbox & Python simulated runner)
+- `tests/unit/v2-agentic.test.ts`: PASS (29 tests — safe planning agent & changeset approval)
+- `tests/unit/recommendation-reliability.test.ts`: PASS (21 tests)
+- `tests/unit/theme.test.ts`: PASS (9 tests)
+- **Total Vitest Tests**: **172 Passed, 0 Failed, 22 Test Suites**.
 
-`npm audit` currently flags the existing Next.js 14 dependency tree; the
-remediation is a major framework upgrade, deliberately deferred out of scope
-for the SIH prototype.
+---
 
-## Design & offline (summary)
+## 6. Security Model & Honest Capability Boundaries
 
-- Four palettes × light/dark on semantic tokens; `app/themes.css` is
-  generated by `scripts/generate-themes.py` with a WCAG AA contrast gate —
-  never hand-edit it. Details: [`docs/design/`](docs/design/)
-- PWA: manifest + service worker caching **only the public shell**; offline
-  queue for allowlisted task/session mutations with conflict detection and
-  account isolation; AI honestly reports unavailability offline.
+1. **Client Code Execution (Rule 8 Compliance)**:
+   Arbitrary student code is **NEVER executed on the server**. JavaScript is evaluated inside an isolated, restricted client-side sandbox with a 1500ms safety timeout and output truncation. Python is evaluated via an isolated client-side interpreter simulation.
+2. **AI Reasoning Without Self-Authorization**:
+   The Planning Agent can propose schedule mutations as an unexecuted Change Set. Changes require explicit student review: **Approve / Edit / Reject**. Execution only proceeds post-approval, and success is verified by rereading the persistent database.
+3. **Database RLS Policies**:
+   Every database row (`subjects`, `tasks`, `study_sessions`, `resources`, `documents`, `submissions`, `agent_runs`) is secured with PostgreSQL Row Level Security (`auth.uid() = user_id`). Users can never access or mutate rows belonging to another student.
+4. **Offline Capability & Demo Mode**:
+   When no backend or API keys are configured, AIESES runs in local demo mode (`localStorage`), remaining 100% clickable, fully functional, and reload-safe.
 
-## Experimental ML (research, not production)
+---
 
-`python/` is an isolated research package (feature engineering, synthetic
-demo data, an experimental workload model, evaluation) — clearly labeled,
-synthetic-data only, no FastAPI (deliberately deferred). The live app uses
-the **deterministic** TypeScript signals in `lib/intelligence.ts` and never
-depends on the Python model. See `python/README.md`.
+## 7. Judge Demo Walkthrough (SIH 2026 Script)
 
-## Deployment
+### Step 1: Student Onboarding & Dashboard (1 min)
+1. Navigate to `/register` or `/login`. Log in to the demo workspace.
+2. The **AIESES Dashboard** (`/dashboard`) surfaces academic stats: active subjects, pending assignments, overdue tasks, upcoming exams, and scheduled study sessions.
+3. Click **"Generate my study plan"** in the AIESES AI card: transparent rules prioritize overdue tasks and near-term exams.
 
-- **Vercel**: import the repo, set the environment variables, deploy.
-- Production domain: `https://edunexus-pied.vercel.app`
-- Works out of the box in demo mode with no env vars set.
+### Step 2: Adaptive Weak Area Detection & AI Tutor (1.5 min)
+1. Open **Academic Risk** (`/risk`): EduAdapt analyzes overdue items and study deficits to flag at-risk subject areas (e.g. *Calculus Limits* or *Binary Search Trees*).
+2. Click **"Ask AI Tutor to Explain"** (`/ai/tutor`): Choose between 6 modes (*Explain Concept*, *Explain Simply*, *Give Example*, *Practice Challenge*, *Q&A*, *Recommend Action*).
+3. Experience the clear, structured explanation with suggested follow-up learning actions.
 
-## Limitations (honest)
+### Step 3: DIKSHA Curriculum & Knowledge Assessment (1.5 min)
+1. Open **DIKSHA Gateway** (`/learning/diksha`): Search across official NCERT/CBSE curriculum modules with full attribution and direct links.
+2. Open **Assessments** (`/assessments`): Take the interactive practice quiz on *Data Structures* or *Calculus*.
+3. Submit to receive immediate score breakdown, question explanations, and targeted adaptive recommendations.
 
-- Hosted Supabase E2E certification requires a live, reachable project
-  (suite self-skips otherwise); venue demos should prefer demo mode.
-- Demo mode stores data in the browser (local-only, SHA-256 hashing) — it is
-  a demonstration backend, not a credential store.
-- The Python workload model is synthetic-data research, not a production
-  predictor; no trained model is served to students.
-- Direct file uploads are an intentional capability boundary (notes + links
-  are supported; file transfer needs a future private-storage integration).
-- Open Supabase console items are documented in
-  `docs/security/security.md` — the project does not claim "zero security
-  issues".
+### Step 4: Student Creation Workspace (1 min)
+1. Open **Creation Workspace** (`/workspace`): Document your study takeaways in the split-screen live Markdown editor. Click **"Print / PDF"** to export formatted notes.
+2. Switch to **Coding Playground**: Run the binary search algorithm or derivative solver in the isolated, safe sandbox.
 
-## Repository map
+### Step 5: Educator Portal (1 min)
+1. Navigate to `/teacher`: View class roster, student completion rates, average weekly study hours, assessment grading, and class weak area clustering.
 
-```
-app/            (auth) + (app) route groups, api/ (recommend + ai gateway)
-components/     ui · shell · theme · providers · landing · auth · dashboard
-                · academics · planner · learning · insights · ai
-lib/            repo (contract + 2 backends) · ai/ (V2 system) ·
-                recommendation*.ts (V1 AI) · intelligence · offline ·
-                supabase · theme · validation helpers
-supabase/       migrations (applied, idempotent, documented order)
-python/         experimental intelligence research (isolated)
-tests/          unit · security (RLS via real Postgres) · e2e (Playwright)
-docs/           architecture · ai · design · security · testing · sih
-scripts/        generate-themes.py (token generator + contrast gate)
-```
+---
+
+## 8. Deployment Information
+
+- **Build Output**: Clean Next.js 14 Standalone Production Build (`npm run build`)
+- **Runtime Environment**: Node.js 22.x HTTP Server bound to `0.0.0.0:3000` (live preview enabled)
+- **Vercel / Cloud Deployment**: Repository is Vercel and Supabase ready. In environments where external cloud provider credentials (`VERCEL_TOKEN`, `SUPABASE_SERVICE_KEY`) are not provided, the application runs locally and in live sandbox preview.
+
+---
+
+*Team Vision Forge · SIH 2026 · Problem Statement 26207 (Smart Education)*

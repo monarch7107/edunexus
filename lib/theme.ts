@@ -38,8 +38,8 @@ export const PALETTES: {
   {
     value: "aurora",
     label: "Aurora Scholar",
-    tagline: "EduNexus signature",
-    description: "Midnight to sapphire to aurora to ice. The uniquely EduNexus identity.",
+    tagline: "AIESES signature",
+    description: "Midnight to sapphire to aurora to ice. The uniquely AIESES identity.",
     swatches: ["#155EEF", "#14B8A6", "#07111F"],
   },
 ];

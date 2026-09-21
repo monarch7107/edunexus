@@ -16,7 +16,7 @@ export default function NotFound() {
           there’s still plenty to explore.
         </p>
         <ButtonLink href="/">
-          <ArrowLeft className="h-4 w-4" /> Back to EduNexus
+          <ArrowLeft className="h-4 w-4" /> Back to AIESES
         </ButtonLink>
       </main>
     </div>

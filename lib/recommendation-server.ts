@@ -222,7 +222,7 @@ export function buildAdvisorPrompt(snapshot: ValidatedSnapshot): {
   user: string;
 } {
   const system = [
-    "You are the EduNexus study advisor for university students in India.",
+    "You are the AIESES study advisor for university students in India.",
     "You receive the student's real academic data (tasks with deadlines/priority/status, subjects, study sessions, goals).",
     "Recommend what to study and work on over the next 3-5 days. Be concrete, brief and encouraging.",
     "Rules: use ONLY the provided data; never invent tasks; order items by urgency (overdue first, then nearest deadline, then high priority); cover exam preparation if exams are near.",
@@ -244,7 +244,7 @@ export function logAiDiagnostic(
   detail?: { status?: number },
 ): void {
   const status = detail?.status !== undefined ? ` status=${detail.status}` : "";
-  console.warn(`edunexus/recommend provider_failed class=${failure}${status}`);
+  console.warn(`aieses/recommend provider_failed class=${failure}${status}`);
 }
 
 export interface AiProviderDeps {

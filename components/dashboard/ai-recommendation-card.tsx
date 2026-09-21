@@ -72,7 +72,7 @@ export function AiRecommendationCard() {
           </h2>
         </div>
         <span className="rounded-md border border-brand-200 bg-surface/50 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-brand-700">
-          Nexus AI
+          AIESES AI
         </span>
       </div>
       <AnimatePresence mode="wait" initial={false}>

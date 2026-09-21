@@ -414,7 +414,7 @@ function AiControlsCard() {
     <Card id="ai-controls">
       <CardHeader
         title="AI & privacy"
-        description="How EduNexus uses AI on your data — and the controls you keep."
+        description="How AIESES uses AI on your data — and the controls you keep."
         icon={<ShieldCheck className="h-4 w-4 text-brand-600" />}
       />
       <ul className="space-y-3 text-xs leading-relaxed text-muted">

@@ -19,10 +19,14 @@ import {
   Sprout,
   Loader2,
   CircleHelp,
+  FileCode2,
+  Target,
+  GraduationCap,
+  Users,
 } from "lucide-react";
 import { Logo } from "./logo";
 import { cn, initials } from "@/lib/utils";
-import { APP_NAV, INTEL_NAV } from "@/lib/constants";
+import { APP_NAV, INTEL_NAV, CREATION_NAV, TEACHER_NAV } from "@/lib/constants";
 import { useApp } from "@/components/providers/app-data";
 import { ProgressBar } from "@/components/ui/progress-bar";
 
@@ -37,6 +41,10 @@ export const NAV_ICONS = {
   "clipboard-check": ClipboardCheck,
   activity: Activity,
   "alert-triangle": AlertTriangle,
+  "file-code": FileCode2,
+  target: Target,
+  "graduation-cap": GraduationCap,
+  users: Users,
 } as const;
 export function Sidebar() {
   const pathname = usePathname();
@@ -50,7 +58,7 @@ export function Sidebar() {
       <Link
         href="/dashboard"
         className="px-6 pb-8 pt-7"
-        aria-label="EduNexus dashboard"
+        aria-label="AIESES dashboard"
       >
         <Logo />
       </Link>
@@ -108,10 +116,44 @@ export function Sidebar() {
             );
           })}
         </div>
-        <p className="eyebrow mb-3 mt-7 px-3">Intelligence</p>
+        <p className="eyebrow mb-3 mt-7 px-3">Creation & Workspace</p>
+        <div className="space-y-1.5">
+          {CREATION_NAV.map((item) => {
+            const Icon = NAV_ICONS[item.icon as keyof typeof NAV_ICONS];
+            const active =
+              pathname === item.href || pathname?.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all",
+                  active
+                    ? "bg-brand-50 font-semibold text-brand-700"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-ink",
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "h-[18px] w-[18px] shrink-0 transition-transform group-hover:-translate-y-px",
+                    active && "text-brand-600",
+                  )}
+                  strokeWidth={active ? 2 : 1.7}
+                  aria-hidden
+                />
+                {item.label}
+                {active && (
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-600" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+        <p className="eyebrow mb-3 mt-7 px-3">Intelligence & AI</p>
         <div className="space-y-1.5">
           {INTEL_NAV.map((item) => {
-            const Icon = NAV_ICONS[item.icon];
+            const Icon = NAV_ICONS[item.icon as keyof typeof NAV_ICONS];
             // "/ai" must not stay highlighted inside "/ai/approvals" etc.
             const active =
               item.href === "/ai"
@@ -124,7 +166,41 @@ export function Sidebar() {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group relative flex items-center gap-3 rounded-lg px-3 py-3 text-[13px] font-medium transition-all",
+                  "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all",
+                  active
+                    ? "bg-brand-50 font-semibold text-brand-700"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-ink",
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "h-[18px] w-[18px] shrink-0 transition-transform group-hover:-translate-y-px",
+                    active && "text-brand-600",
+                  )}
+                  strokeWidth={active ? 2 : 1.7}
+                  aria-hidden
+                />
+                {item.label}
+                {active && (
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-600" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+        <p className="eyebrow mb-3 mt-7 px-3">Educator</p>
+        <div className="space-y-1.5">
+          {TEACHER_NAV.map((item) => {
+            const Icon = NAV_ICONS[item.icon as keyof typeof NAV_ICONS];
+            const active =
+              pathname === item.href || pathname?.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all",
                   active
                     ? "bg-brand-50 font-semibold text-brand-700"
                     : "text-slate-500 hover:bg-slate-50 hover:text-ink",

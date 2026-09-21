@@ -1,4 +1,4 @@
-/* EduNexus PWA — cache only the public shell. Never cache /api or private data. */
+/* AIESES PWA — cache only the public shell. Never cache /api or private data. */
 const CACHE = "edunexus-shell-v2";
 const SHELL = ["/", "/login", "/manifest.webmanifest", "/icon.svg"];
 

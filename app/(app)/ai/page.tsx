@@ -8,6 +8,7 @@ import {
   ClipboardCheck,
   History,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { PageHeader } from "@/components/shell/page-header";
 import { ScheduleCopilot } from "@/components/ai/copilot";
@@ -50,19 +51,27 @@ export default function AIPage() {
       <PageHeader
         eyebrow="Intelligence"
         title="AI command center"
-        description="Ask EduNexus to reason over your academic context. You approve every meaningful change."
+        description="Ask AIESES to reason over your academic context. You approve every meaningful change."
         action={
-          <Link href="/ai/approvals" className="text-link">
-            <ClipboardCheck className="size-3.5" aria-hidden /> Approval Center
-            {awaiting.length > 0 && (
-              <Badge
-                variant="outline"
-                className="border-amber-200 bg-amber-50 text-amber-800"
-              >
-                {awaiting.length} awaiting
-              </Badge>
-            )}
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/ai/tutor"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-100"
+            >
+              <Sparkles className="size-3.5" /> AI Pedagogical Tutor
+            </Link>
+            <Link href="/ai/approvals" className="text-link">
+              <ClipboardCheck className="size-3.5" aria-hidden /> Approval Center
+              {awaiting.length > 0 && (
+                <Badge
+                  variant="outline"
+                  className="border-amber-200 bg-amber-50 text-amber-800"
+                >
+                  {awaiting.length} awaiting
+                </Badge>
+              )}
+            </Link>
+          </div>
         }
       />
 

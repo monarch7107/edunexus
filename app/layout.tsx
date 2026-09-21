@@ -9,15 +9,15 @@ import "@fontsource-variable/manrope";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "EduNexus",
+  title: "AIESES — AI-Enabled Integrated Smart Education System",
   description:
-    "An adaptive academic ecosystem for students — manage subjects, tasks, study sessions and resources, with safe AI that plans alongside you.",
-  applicationName: "EduNexus",
+    "AIESES: AI-Enabled Integrated Smart Education System for SIH 2026 (Problem Statement 26207). Adaptive learning, verified AI guidance, DIKSHA government curriculum integration, teacher portal, and student creation workspace.",
+  applicationName: "AIESES",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "EduNexus",
+    title: "AIESES",
   },
 };
 

@@ -318,7 +318,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       signUp: (email, password) =>
         run(async () => {
           await repo.signUp(email, password);
-        }, "Account created. Welcome to EduNexus!"),
+        }, "Account created. Welcome to AIESES!"),
       signIn: (email, password) =>
         run(async () => {
           await repo.signIn(email, password);

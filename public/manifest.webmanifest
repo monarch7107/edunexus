@@ -1,7 +1,7 @@
 {
-  "name": "EduNexus",
-  "short_name": "EduNexus",
-  "description": "A premium academic workspace for students.",
+  "name": "AIESES — AI-Enabled Integrated Smart Education System",
+  "short_name": "AIESES",
+  "description": "AI-Enabled Integrated Smart Education System (SIH 2026, Problem Statement 26207).",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#F7F8F5",

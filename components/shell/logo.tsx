@@ -36,9 +36,14 @@ export function Logo({
         </svg>
       </span>
       {withText && (
-        <span className="font-display text-[21px] font-extrabold tracking-[-.065em] text-ink">
-          edu<span className="font-semibold">nexus</span>
-          <span className="text-brand-500">.</span>
+        <span className="inline-flex flex-col">
+          <span className="font-display text-[20px] font-black tracking-tight text-ink leading-tight">
+            AIE<span className="text-brand-600 font-extrabold">SES</span>
+            <span className="text-brand-500">.</span>
+          </span>
+          <span className="text-[8.5px] font-bold tracking-wider text-muted uppercase">
+            Smart Education
+          </span>
         </span>
       )}
     </span>

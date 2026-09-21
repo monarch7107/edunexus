@@ -28,7 +28,7 @@ export function AuthScreen({
   return (
     <div className="grid min-h-screen bg-surface lg:grid-cols-[1.02fr_1fr]">
       <aside className="relative hidden min-h-screen flex-col overflow-hidden border-r border-hero-line bg-hero p-12 text-hero-ink lg:flex xl:p-16">
-        <Link href="/" aria-label="EduNexus home">
+        <Link href="/" aria-label="AIESES home">
           <Logo
             className="[&>span:last-child]:!text-hero-ink"
             iconClassName="!bg-gold !text-on-gold"
@@ -119,7 +119,7 @@ export function AuthScreen({
       </aside>
       <div className="flex min-w-0 flex-col">
         <header className="flex items-center justify-between px-5 py-5 sm:px-10 lg:justify-end">
-          <Link href="/" aria-label="EduNexus home" className="lg:hidden">
+          <Link href="/" aria-label="AIESES home" className="lg:hidden">
             <Logo />
           </Link>
           <ThemePicker />
@@ -160,7 +160,7 @@ export function AuthScreen({
         </main>
         <p className="px-6 pb-6 text-center text-[9px] text-muted">
           A little more organized. A lot more you. © {new Date().getFullYear()}{" "}
-          EduNexus
+          AIESES · Team Vision Forge (SIH 2026)
         </p>
       </div>
     </div>

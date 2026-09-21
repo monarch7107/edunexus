@@ -29,20 +29,20 @@ import { cn } from "@/lib/utils";
 
 const FAQS = [
   [
-    "What can I do with EduNexus?",
-    "Organize your subjects and assignments, track deadlines, plan study sessions, collect notes and helpful links, and understand your academic progress—all in one connected workspace.",
+    "What can I do with AIESES?",
+    "AIESES (AI-Enabled Integrated Smart Education System) unifies your academic workflow: organize subjects, assignments, and exams, track deadlines, generate adaptive study plans, explore NCERT/DIKSHA government resources, interact with a verified AI tutor, and write or code in your integrated workspace.",
   ],
   [
     "How do smart study recommendations work?",
-    "EduNexus uses your own tasks, deadlines, subjects, and study history to suggest a focused plan. When an AI service is unavailable, transparent smart rules prioritize overdue work, upcoming deadlines, and task priority.",
+    "AIESES uses your actual tasks, deadlines, subjects, and study history to suggest a focused plan. When an AI service is unavailable, transparent smart rules prioritize overdue work, upcoming deadlines, and task priority.",
   ],
   [
     "Where is my work saved?",
-    "In a connected workspace, your data is saved with Supabase and protected by authenticated access. Without a configured backend, EduNexus runs in local mode and saves your work only in your current browser. Your workspace settings clearly show which mode you’re using.",
+    "In a connected workspace, your data is saved with Supabase and protected by authenticated access with Row Level Security. Without a configured backend, AIESES runs in local mode and saves your work safely in your browser localStorage. Your workspace clearly shows which mode you're using.",
   ],
   [
-    "Can I add my study documents?",
-    "You can save a link to a hosted PDF, document, or image alongside your notes. The file picker lets you preview local files, but direct uploads are not available until secure file storage is connected. EduNexus never marks a file as uploaded when it hasn’t been.",
+    "Can I add my study documents and code?",
+    "Yes! AIESES includes a student creation workspace with a Markdown document editor, PDF export, and an isolated coding IDE supporting Python and JavaScript with strict safety controls.",
   ],
 ];
 export function LandingPage() {
@@ -57,7 +57,7 @@ export function LandingPage() {
       </a>
       <header className="sticky top-0 z-40 border-b border-line bg-surface/95 backdrop-blur-md">
         <div className="mx-auto flex h-[82px] max-w-[1380px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-12">
-          <Link href="/" aria-label="EduNexus home">
+          <Link href="/" aria-label="AIESES home">
             <Logo />
           </Link>
           <nav
@@ -141,8 +141,7 @@ export function LandingPage() {
           <div className="relative mx-auto grid max-w-[1380px] items-center gap-14 px-5 pb-20 pt-14 sm:px-8 sm:pt-20 lg:grid-cols-[.91fr_1.22fr] lg:gap-12 lg:px-12 lg:pb-24 lg:pt-[86px]">
             <Reveal>
               <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.13em] text-brand-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> A
-                brighter way to student
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" /> AIESES · SIH 2026 · Team Vision Forge
               </div>
               <h1 className="max-w-[580px] font-display text-[47px] font-extrabold leading-[1.12] tracking-[-.065em] sm:text-[64px] lg:text-[62px] xl:text-[70px]">
                 Less overwhelm.
@@ -569,11 +568,11 @@ export function LandingPage() {
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-[1380px] flex-wrap items-center justify-between gap-6 px-5 py-8 sm:px-8 lg:px-12">
           <div>
-            <Link href="/" aria-label="EduNexus home">
+            <Link href="/" aria-label="AIESES home">
               <Logo />
             </Link>
             <p className="mt-2 text-[10px] text-muted">
-              Made for the way you learn.
+              AI-Enabled Integrated Smart Education System
             </p>
           </div>
           <div className="flex gap-6 text-xs text-muted">
@@ -588,7 +587,7 @@ export function LandingPage() {
             </Link>
           </div>
           <p className="text-[10px] text-muted">
-            © {new Date().getFullYear()} EduNexus. Keep growing.
+            © {new Date().getFullYear()} AIESES · Vision Forge · SIH 2026 Problem Statement 26207
           </p>
         </div>
       </footer>

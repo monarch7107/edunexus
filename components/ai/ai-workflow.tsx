@@ -29,7 +29,7 @@ export function AICommandBox({
           </h3>
           <p className="mt-1 max-w-xl text-sm leading-relaxed text-white/85">
             {summary ??
-              "Ask for a recommendation. EduNexus will explain its context, propose changes, and keep you in control."}
+              "Ask for a recommendation. AIESES will explain its context, propose changes, and keep you in control."}
           </p>
           <p className="mt-3 flex items-center gap-1.5 text-[11px] text-white/70">
             <ShieldCheck className="size-3.5" aria-hidden />

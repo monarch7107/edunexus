@@ -174,8 +174,8 @@ export default function DashboardPage() {
       <AICommandBox
         summary={
           isEmpty
-            ? "Add your subjects and deadlines, then ask EduNexus to reason over them — every proposal stays under your control."
-            : `EduNexus sees ${subjects.length} ${subjects.length === 1 ? "subject" : "subjects"}, ${pending.length} open ${pending.length === 1 ? "task" : "tasks"}, and ${sessions.filter((s) => s.status === "planned").length} planned sessions. Ask for a recommendation — you approve every change.`
+            ? "Add your subjects and deadlines, then ask AIESES to reason over them — every proposal stays under your control."
+            : `AIESES sees ${subjects.length} ${subjects.length === 1 ? "subject" : "subjects"}, ${pending.length} open ${pending.length === 1 ? "task" : "tasks"}, and ${sessions.filter((s) => s.status === "planned").length} planned sessions. Ask for a recommendation — you approve every change.`
         }
       />
 

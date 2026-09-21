@@ -53,9 +53,20 @@ export const APP_NAV = [
   { href: "/profile", label: "Profile", icon: "user-round" },
 ] as const;
 
+export const CREATION_NAV = [
+  { href: "/workspace", label: "Creation Workspace", icon: "file-code" },
+  { href: "/assessments", label: "Assessments", icon: "target" },
+  { href: "/learning/diksha", label: "DIKSHA Gateway", icon: "graduation-cap" },
+] as const;
+
 export const INTEL_NAV = [
   { href: "/ai", label: "AI Command Center", icon: "sparkles" },
+  { href: "/ai/tutor", label: "AI Tutor", icon: "sparkles" },
   { href: "/ai/approvals", label: "Approval Center", icon: "clipboard-check" },
   { href: "/ai/activity", label: "Agent Activity", icon: "activity" },
   { href: "/risk", label: "Academic Risk", icon: "alert-triangle" },
+] as const;
+
+export const TEACHER_NAV = [
+  { href: "/teacher", label: "Teacher Portal", icon: "users" },
 ] as const;

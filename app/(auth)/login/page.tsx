@@ -46,7 +46,7 @@ export default function LoginPage() {
       subtitle="A fresh day, a clear plan. Let’s pick up where you left off."
       footer={
         <>
-          New to EduNexus?{" "}
+          New to AIESES?{" "}
           <Link
             href="/register"
             className="font-medium text-brand-600 hover:underline"

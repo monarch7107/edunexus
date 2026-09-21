@@ -13,9 +13,10 @@ import {
   StickyNote,
   UploadCloud,
   X,
+  GraduationCap,
 } from "lucide-react";
 import { PageHeader } from "@/components/shell/page-header";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { EmptyState, LoadingState } from "@/components/ui/states";
 import { AnimatedList, Reveal } from "@/components/ui/motion";
@@ -84,6 +85,9 @@ export default function LearningPage() {
         description="Keep the useful, the inspiring, and the worth-remembering in one place."
         action={
           <>
+            <ButtonLink href="/learning/diksha" variant="outline">
+              <GraduationCap className="h-3.5 w-3.5" /> DIKSHA Gateway
+            </ButtonLink>
             <Button variant="outline" onClick={() => add("file")}>
               <UploadCloud className="h-3.5 w-3.5" /> Choose file
             </Button>

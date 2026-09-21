@@ -337,7 +337,7 @@ export default function OnboardingPage() {
         </div>
       </div>
       <p className="mt-6 text-center text-[10px] text-muted">
-        A fresh start. A clearer mind. Your EduNexus workspace.
+        A fresh start. A clearer mind. Your AIESES workspace.
       </p>
     </div>
   );

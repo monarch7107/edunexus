@@ -13,12 +13,13 @@ import { useApp } from "@/components/providers/app-data";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { PageTransition } from "@/components/ui/motion";
 import { ThemePicker } from "@/components/theme/theme-picker";
+import { LanguagePicker } from "@/components/theme/language-picker";
 import { Sidebar } from "./sidebar";
 import { MobileNavigation } from "./mobile-navigation";
 import { Logo } from "./logo";
 import { WorkspaceSearch } from "./workspace-search";
 import { ConnectivityBar } from "./connectivity";
-import { APP_NAV, INTEL_NAV } from "@/lib/constants";
+import { APP_NAV, INTEL_NAV, CREATION_NAV, TEACHER_NAV } from "@/lib/constants";
 import { initials } from "@/lib/utils";
 import { isOnboarded } from "@/lib/profile";
 
@@ -61,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-canvas">
         <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-          <Link href="/" aria-label="EduNexus home">
+          <Link href="/" aria-label="AIESES home">
             <Logo />
           </Link>
           <ThemePicker />
@@ -73,7 +74,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   const current =
     APP_NAV.find((item) => item.href === pathname)?.label ||
+    CREATION_NAV.find((item) => item.href === pathname)?.label ||
     INTEL_NAV.find((item) => item.href === pathname)?.label ||
+    TEACHER_NAV.find((item) => item.href === pathname)?.label ||
     "Workspace";
   return (
     <div className="min-h-screen bg-canvas">
@@ -94,7 +97,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <Link
             href="/dashboard"
-            aria-label="EduNexus dashboard"
+            aria-label="AIESES dashboard"
             className="lg:hidden"
           >
             <Logo />
@@ -103,6 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <ConnectivityBar />
             <WorkspaceSearch />
             <span className="hidden h-5 w-px bg-line sm:block" />
+            <LanguagePicker />
             <ThemePicker />
             <Link
               href="/profile"

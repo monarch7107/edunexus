@@ -1,4 +1,5 @@
-import { LandingPage } from "@/components/landing/landing-page";
+import { LearnVerseLanding } from "@/components/learnverse/learnverse-landing";
+
 export default function Page() {
-  return <LandingPage />;
+  return <LearnVerseLanding />;
 }

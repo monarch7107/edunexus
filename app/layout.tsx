@@ -3,28 +3,36 @@ import { ThemeProvider } from "@/components/providers/theme";
 import { ToastProvider } from "@/components/providers/toast";
 import { AppDataProvider } from "@/components/providers/app-data";
 import { themeScript } from "@/lib/theme";
-// Local variable fonts (design system typography — see docs/design/design-tokens.md).
 import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/manrope";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AIESES — AI-Enabled Integrated Smart Education System",
+  title: {
+    default: "LearnVerse AI — Your Personal Learning Universe",
+    template: "%s | LearnVerse AI",
+  },
   description:
-    "AIESES: AI-Enabled Integrated Smart Education System for SIH 2026 (Problem Statement 26207). Adaptive learning, verified AI guidance, DIKSHA government curriculum integration, teacher portal, and student creation workspace.",
-  applicationName: "AIESES",
+    "Turn courses, articles, videos, documents and projects into a personalized learning journey. Learn, practice, build skills and track your progress with LearnVerse AI.",
+  applicationName: "LearnVerse AI",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "AIESES",
+    title: "LearnVerse",
+  },
+  openGraph: {
+    title: "LearnVerse AI — Your Personal Learning Universe",
+    description:
+      "Learn anything, from anywhere, with an adaptive learning journey built around you.",
+    type: "website",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#2563EB" },
-    { media: "(prefers-color-scheme: dark)", color: "#0F172A" },
+    { media: "(prefers-color-scheme: dark)", color: "#05060B" },
   ],
 };
 
